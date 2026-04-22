@@ -24,7 +24,8 @@ export default function HomePage() {
         </p>
       </header>
 
-      <section className="grid gap-6 md:grid-cols-3">
+      {/* baris 1: dua stat card kecil */}
+      <section className="grid gap-6 md:grid-cols-2">
         <Card variant="gradient">
           <div className="flex items-center justify-between mb-4">
             <StatusBadge status="purple" label="Impact" />
@@ -54,14 +55,19 @@ export default function HomePage() {
             accent="success"
           />
         </Card>
+      </section>
 
+      {/* baris 2: runway card lebar penuh — struktur dompet */}
+      <section>
         <RunwayCard
           runwayMonths={7}
-          trend="down"
-          trendLabel="-1 bulan dari proyeksi"
+          cashBalance={850_000_000}
+          incomeMonthly={350_000_000}
+          burnRateMonthly={121_428_571}
         />
       </section>
 
+      {/* baris 3: progress ring + status palet */}
       <section className="grid gap-6 md:grid-cols-3">
         <Card className="md:col-span-1 flex flex-col items-center justify-center">
           <ProgressRing
