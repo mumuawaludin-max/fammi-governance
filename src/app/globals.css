@@ -1,27 +1,151 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-primary: #6323da;
+  --color-primary-light: #ede5ff;
+  --color-primary-dark: #4a0f99;
+  --color-success: #00b894;
+  --color-warning: #f39c12;
+  --color-danger: #e74c3c;
+  --color-background: #f8f5ff;
+  --color-surface: #ffffff;
+  --color-text-primary: #1e1b3a;
+  --color-text-secondary: #636e72;
+
+  --radius-card: 40px;
+  --radius-panel: 32px;
+  --radius-button: 9999px;
+  --radius-input: 1rem;
+
+  --shadow-fammi: 0 4px 24px rgba(99, 35, 218, 0.08);
+  --shadow-fammi-hover: 0 8px 40px rgba(99, 35, 218, 0.16);
+  --shadow-fammi-elevated: 0 16px 64px rgba(99, 35, 218, 0.2);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html,
+  body {
+    padding: 0;
+    margin: 0;
+  }
+
+  body {
+    font-family: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+    background-color: var(--color-background);
+    color: var(--color-text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--color-text-primary);
+  }
+
+  code,
+  kbd,
+  samp,
+  pre {
+    font-family: "JetBrains Mono", "Courier New", monospace;
+  }
+
+  *:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 4px;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-}
-
 @layer utilities {
+  .text-gradient-fammi {
+    background: linear-gradient(135deg, #6323da 0%, #9b59b6 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+
+  .bg-gradient-fammi {
+    background: linear-gradient(135deg, #6323da 0%, #9b59b6 100%);
+  }
+
+  .scrollbar-fammi::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .scrollbar-fammi::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-fammi::-webkit-scrollbar-thumb {
+    background: #d4c2ff;
+    border-radius: 9999px;
+  }
+  .scrollbar-fammi::-webkit-scrollbar-thumb:hover {
+    background: #b59aff;
+  }
+
+  .skeleton-shimmer {
+    background: linear-gradient(
+      90deg,
+      rgba(237, 229, 255, 0.6) 0%,
+      rgba(212, 194, 255, 0.9) 50%,
+      rgba(237, 229, 255, 0.6) 100%
+    );
+    background-size: 800px 100%;
+    animation: shimmer 1.6s linear infinite;
+  }
+
   .text-balance {
     text-wrap: balance;
+  }
+}
+
+@keyframes countUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
   }
 }
