@@ -39,11 +39,13 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(function Card(
       ref={ref}
       onClick={onClick}
       className={cn(
-        "rounded-card shadow-fammi transition-all duration-300 ease-out",
+        // default: flat tanpa shadow
+        "rounded-card transition-all duration-300 ease-out",
         padded && "p-6",
         VARIANT_CLASSES[variant],
+        // neon glow hanya saat hover
         isInteractive &&
-          "hover:shadow-fammi-hover hover:scale-[1.01] active:scale-[0.99]",
+          "hover:shadow-neon hover:scale-[1.015] active:scale-[0.99]",
         typeof onClick === "function" && "cursor-pointer",
         className,
       )}

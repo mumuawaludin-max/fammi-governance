@@ -1,21 +1,33 @@
 import Link from "next/link";
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/cn";
+import {
+  IconGlobe,
+  IconWallet,
+  IconBuilding,
+  IconFlask,
+  IconTrendingUp,
+  IconHeart,
+  IconSprout,
+} from "@/components/ui/icons";
+import type { SVGProps } from "react";
+
+type IconComponent = (props: SVGProps<SVGSVGElement> & { size?: number }) => JSX.Element;
 
 interface NavItem {
   href: string;
   label: string;
-  emoji: string;
+  Icon: IconComponent;
 }
 
 const NAV_ITEMS: ReadonlyArray<NavItem> = [
-  { href: ROUTES.HOME, label: "Mission Control", emoji: "🌍" },
-  { href: ROUTES.FINANCE, label: "Finance", emoji: "💸" },
-  { href: ROUTES.OPERATIONS, label: "Operations", emoji: "🏫" },
-  { href: ROUTES.PRODUCT, label: "Product", emoji: "🧪" },
-  { href: ROUTES.GROWTH, label: "Growth", emoji: "📈" },
-  { href: ROUTES.TEAM, label: "Team", emoji: "💜" },
-  { href: ROUTES.IMPACT, label: "Impact", emoji: "🌱" },
+  { href: ROUTES.HOME, label: "Mission Control", Icon: IconGlobe },
+  { href: ROUTES.FINANCE, label: "Finance", Icon: IconWallet },
+  { href: ROUTES.OPERATIONS, label: "Operations", Icon: IconBuilding },
+  { href: ROUTES.PRODUCT, label: "Product", Icon: IconFlask },
+  { href: ROUTES.GROWTH, label: "Growth", Icon: IconTrendingUp },
+  { href: ROUTES.TEAM, label: "Team", Icon: IconHeart },
+  { href: ROUTES.IMPACT, label: "Impact", Icon: IconSprout },
 ];
 
 export function Sidebar({ className }: { className?: string }) {
@@ -33,7 +45,7 @@ export function Sidebar({ className }: { className?: string }) {
         aria-label="Fammi Governance OS"
       >
         <span
-          className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-fammi text-white font-bold shadow-fammi"
+          className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-fammi text-white font-bold"
           aria-hidden
         >
           F
@@ -59,9 +71,10 @@ export function Sidebar({ className }: { className?: string }) {
               "transition-all hover:bg-fammi-100 hover:text-fammi-dark",
             )}
           >
-            <span className="text-lg" aria-hidden>
-              {item.emoji}
-            </span>
+            <item.Icon
+              size={17}
+              className="shrink-0 text-text-secondary group-hover:text-fammi transition-colors"
+            />
             <span>{item.label}</span>
           </Link>
         ))}
@@ -69,11 +82,10 @@ export function Sidebar({ className }: { className?: string }) {
 
       <div className="mt-auto rounded-[32px] bg-gradient-fammi-soft p-4 text-xs text-text-secondary">
         <p className="font-semibold text-fammi-dark mb-1">
-          55 → 4.000 sekolah
+          55 dari 4.000 sekolah
         </p>
         <p className="leading-relaxed">
-          Setiap angka di sini adalah anak yang terlayani. Mari rawat
-          baik-baik.
+          Setiap angka di sini adalah anak yang terlayani.
         </p>
       </div>
     </aside>

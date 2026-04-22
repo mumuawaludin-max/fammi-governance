@@ -52,9 +52,15 @@ const config: Config = {
         card: "40px",
       },
       boxShadow: {
+        // default shadow dihapus dari card — hanya muncul saat hover
         fammi: "0 4px 24px rgba(99,35,218,0.08)",
         "fammi-hover": "0 8px 40px rgba(99,35,218,0.16)",
         "fammi-elevated": "0 16px 64px rgba(99,35,218,0.20)",
+        // neon: efek glow ungu saat hover
+        "neon": "0 0 0 1px rgba(99,35,218,0.12), 0 0 20px rgba(99,35,218,0.25), 0 8px 32px rgba(99,35,218,0.18)",
+        "neon-success": "0 0 0 1px rgba(0,184,148,0.15), 0 0 20px rgba(0,184,148,0.25), 0 8px 32px rgba(0,184,148,0.15)",
+        "neon-warning": "0 0 0 1px rgba(243,156,18,0.15), 0 0 20px rgba(243,156,18,0.25), 0 8px 32px rgba(243,156,18,0.15)",
+        "neon-danger": "0 0 0 1px rgba(231,76,60,0.15), 0 0 20px rgba(231,76,60,0.25), 0 8px 32px rgba(231,76,60,0.15)",
       },
       fontFamily: {
         display: ["Plus Jakarta Sans", "system-ui", "sans-serif"],
@@ -89,6 +95,8 @@ const config: Config = {
           "linear-gradient(135deg, #6323DA 0%, #9B59B6 100%)",
         "gradient-fammi-soft":
           "linear-gradient(135deg, #EDE5FF 0%, #F8F5FF 100%)",
+        "gradient-wallet":
+          "linear-gradient(135deg, #1E0857 0%, #4A0F99 50%, #6323DA 100%)",
       },
     },
   },
