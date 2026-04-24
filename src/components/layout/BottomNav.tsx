@@ -4,20 +4,20 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
-  Wallet,
   Building2,
+  Wallet,
   Globe,
-  Sparkles,
+  Heart,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ROUTES } from "@/lib/constants";
 
 const BOTTOM_ITEMS = [
   { href: ROUTES.HOME, label: "Home", Icon: LayoutDashboard },
-  { href: ROUTES.FINANCE, label: "Keuangan", Icon: Wallet },
   { href: ROUTES.OPS, label: "Ops", Icon: Building2 },
+  { href: ROUTES.FINANCE, label: "Keuangan", Icon: Wallet },
   { href: ROUTES.IMPACT, label: "Impact", Icon: Globe },
-  { href: ROUTES.AI_BRIEF, label: "AI Brief", Icon: Sparkles },
+  { href: ROUTES.TEAM, label: "Tim", Icon: Heart },
 ] as const;
 
 export function BottomNav() {

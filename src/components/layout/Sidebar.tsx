@@ -4,13 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
-  Wallet,
   Building2,
+  Wallet,
   Layers,
   TrendingUp,
   Heart,
   Globe,
-  Sparkles,
   X,
   LogOut,
 } from "lucide-react";
@@ -20,13 +19,12 @@ import { useAppStore } from "@/stores/app-store";
 
 const NAV_ITEMS = [
   { href: ROUTES.HOME, label: "Mission Control", Icon: LayoutDashboard },
-  { href: ROUTES.FINANCE, label: "Keuangan", Icon: Wallet },
   { href: ROUTES.OPS, label: "Operasional", Icon: Building2 },
+  { href: ROUTES.FINANCE, label: "Keuangan", Icon: Wallet },
   { href: ROUTES.PRODUCT, label: "Produk", Icon: Layers },
   { href: ROUTES.GROWTH, label: "Sales & Growth", Icon: TrendingUp },
   { href: ROUTES.TEAM, label: "Tim", Icon: Heart },
   { href: ROUTES.IMPACT, label: "Impact", Icon: Globe },
-  { href: ROUTES.AI_BRIEF, label: "AI Brief", Icon: Sparkles },
 ] as const;
 
 interface SidebarProps {

@@ -7,13 +7,12 @@ import { cn } from "@/lib/cn";
 
 const PAGE_TITLES: Record<string, string> = {
   [ROUTES.HOME]: "Mission Control",
-  [ROUTES.FINANCE]: "Keuangan",
   [ROUTES.OPS]: "Operasional",
+  [ROUTES.FINANCE]: "Keuangan",
   [ROUTES.PRODUCT]: "Produk",
   [ROUTES.GROWTH]: "Sales & Growth",
   [ROUTES.TEAM]: "Tim",
   [ROUTES.IMPACT]: "Impact",
-  [ROUTES.AI_BRIEF]: "AI Brief",
 };
 
 function getPageTitle(pathname: string): string {

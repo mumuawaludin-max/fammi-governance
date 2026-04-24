@@ -1,4 +1,37 @@
 // ============================================================================
+// User Accounts (fammi_users)
+// ============================================================================
+
+/**
+ * Spreadsheet: fammi_users
+ * Kolom: userId | email | name | role | isActive | createdAt | lastLogin | notes
+ *
+ * Contoh baris:
+ *   USR001 | mumu@fammi.id | Mumu | FOUNDER | TRUE | 2024-01-01 | 2026-04-24 | Founder
+ *   USR002 | rizki@fammi.id | Rizki | OPS_LEAD | TRUE | 2024-03-15 | | Ops lead Jabodetabek
+ */
+
+export type UserRole =
+  | "FOUNDER"      // akses penuh semua modul termasuk RBAC
+  | "ADMIN"        // akses penuh kecuali RBAC
+  | "FINANCE_VIEW" // hanya baca modul Keuangan
+  | "OPS_LEAD"     // baca + edit Operasional
+  | "PRODUCT_LEAD" // baca + edit Produk
+  | "GROWTH_LEAD"  // baca + edit Growth
+  | "VIEWER";      // read-only semua modul
+
+export interface IUserAccount {
+  userId: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  isActive: boolean;
+  createdAt: string;
+  lastLogin?: string;
+  notes?: string;
+}
+
+// ============================================================================
 // Finance Domain (fammi_finance)
 // ============================================================================
 export interface IFinanceHealth {
