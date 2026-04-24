@@ -29,11 +29,12 @@ export type SheetName = (typeof SHEET_NAMES)[keyof typeof SHEET_NAMES];
 export const ROUTES = {
   HOME: "/",
   FINANCE: "/finance",
-  OPERATIONS: "/operations",
+  OPS: "/ops",
   PRODUCT: "/product",
   GROWTH: "/growth",
   TEAM: "/team",
   IMPACT: "/impact",
+  AI_BRIEF: "/ai-brief",
   TIMELINE: "/timeline",
   WEEKLY: "/weekly",
   REQUESTS: "/requests",

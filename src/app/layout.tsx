@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
-import { Sidebar } from "@/components/layout/Sidebar";
+import { AppShell } from "@/components/layout/AppShell";
 import "./globals.css";
 
 const jakarta = Plus_Jakarta_Sans({
@@ -26,18 +26,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="id" className={`${jakarta.variable} ${jetbrains.variable}`}>
       <body className="min-h-screen bg-background text-text-primary font-display antialiased">
-        <div className="mx-auto flex min-h-screen max-w-[1600px]">
-          <Sidebar />
-          <main className="flex-1 px-4 py-6 md:px-8 md:py-10 scrollbar-fammi">
-            <div className="mx-auto max-w-7xl">{children}</div>
-          </main>
-        </div>
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );
