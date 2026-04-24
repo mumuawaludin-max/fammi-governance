@@ -13,10 +13,10 @@ const SEED_USERS: IUserAccount[] = [
     userId: "USR001",
     email: "mumu@fammi.id",
     name: "Mumu",
-    role: "FOUNDER",
+    role: "Management",
     isActive: true,
     createdAt: "2024-01-01",
-    notes: "Founder",
+    notes: "Strategic Leadership Team",
   },
 ];
 

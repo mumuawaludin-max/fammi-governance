@@ -12,13 +12,14 @@
  */
 
 export type UserRole =
-  | "FOUNDER"      // akses penuh semua modul termasuk RBAC
-  | "ADMIN"        // akses penuh kecuali RBAC
-  | "FINANCE_VIEW" // hanya baca modul Keuangan
-  | "OPS_LEAD"     // baca + edit Operasional
-  | "PRODUCT_LEAD" // baca + edit Produk
-  | "GROWTH_LEAD"  // baca + edit Growth
-  | "VIEWER";      // read-only semua modul
+  | "FOUNDER"           // akses penuh semua modul termasuk RBAC
+  | "ADMIN"             // akses penuh kecuali RBAC
+  | "Management"        // alias FOUNDER — untuk kolom spreadsheet
+  | "FINANCE_VIEW"      // hanya baca modul Keuangan
+  | "OPS_LEAD"          // baca + edit Operasional
+  | "PRODUCT_LEAD"      // baca + edit Produk
+  | "GROWTH_LEAD"       // baca + edit Growth
+  | "VIEWER";           // read-only semua modul
 
 export interface IUserAccount {
   userId: string;
