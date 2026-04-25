@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { Delete, Loader2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useAppStore } from "@/stores/app-store";
@@ -57,14 +58,19 @@ export function LoginView() {
 
         {/* Logo */}
         <div className="flex flex-col items-center gap-3">
-          <div className="flex h-14 w-14 items-center justify-center rounded-[20px] bg-fammi text-white font-bold text-2xl shadow-neon">
-            f
-          </div>
+          <Image
+            src="/logo-fammi.png"
+            alt="Fammi"
+            width={56}
+            height={56}
+            className="rounded-[20px]"
+            priority
+          />
           <div className="text-center">
             <p className="font-bold text-xl text-text-primary tracking-tight">
-              fammi<span className="text-fammi">.</span>
+              Fammi
             </p>
-            <p className="text-xs text-text-secondary mt-0.5">Governance OS</p>
+            <p className="text-xs text-text-secondary mt-0.5">Fammi Governance</p>
           </div>
         </div>
 
