@@ -82,6 +82,21 @@ function toBool(val) {
   return ["true", "ya", "y", "yes", "1", "✓", "x", "true"].indexOf(s) >= 0;
 }
 
+/**
+ * Seperti toBool tapi return null untuk sel yang kosong atau tidak berlaku.
+ * Dipakai untuk field opsional (setupSiswa, selesaiInput, dll) supaya
+ * frontend bisa bedakan "belum selesai" (false) vs "kolom tidak ada/N/A" (null).
+ *   true/false (checkbox)  → true / false
+ *   "" / null / "-" / "n/a" → null  (tidak tampil di checklist)
+ */
+function toOptBool(val) {
+  if (val === true) return true;
+  if (val === false) return false;
+  var s = String(val === null || val === undefined ? "" : val).toLowerCase().trim();
+  if (s === "" || s === "-" || s === "n/a" || s === "na" || s === "tidak ada") return null;
+  return ["true", "ya", "y", "yes", "1", "✓", "x"].indexOf(s) >= 0;
+}
+
 /** Ubah nilai sel (Date object atau string) menjadi "yyyy-MM-dd" */
 function toDateStr(val) {
   if (!val || val === "") return "";
@@ -441,7 +456,8 @@ function readSheet(ss, sheetName, produk) {
 
   var C = buildColMap(allRows);
 
-  function getB(row, ci) { return ci >= 0 ? toBool(row[ci]) : undefined; }
+  function getB(row, ci)  { return ci >= 0 ? toBool(row[ci])    : undefined; }
+  function getOB(row, ci) { return ci >= 0 ? toOptBool(row[ci]) : null; }
   function getD(row, ci) { var s = ci >= 0 ? toDateStr(row[ci]) : ""; return s || undefined; }
   function getS(row, ci) { return ci >= 0 ? (String(row[ci] || "").trim() || undefined) : undefined; }
   function getSe(row, ci) { return ci >= 0 ? String(row[ci] || "").trim() : undefined; }
@@ -474,25 +490,25 @@ function readSheet(ss, sheetName, produk) {
 
       // Persiapan
       dataSiswa:    getB(row, C.dataSiswa) !== undefined ? getB(row, C.dataSiswa) : false,
-      dataGuru:     getB(row, C.dataGuru),
-      sosialisasi:  getB(row, C.sosialisasi),
-      setupGuru:    getB(row, C.setupGuru),
-      setupOrtu:    getB(row, C.setupOrtu),
-      setupSiswa:   getB(row, C.setupSiswa),
+      dataGuru:     getOB(row, C.dataGuru),
+      sosialisasi:  getOB(row, C.sosialisasi),
+      setupGuru:    getOB(row, C.setupGuru),
+      setupOrtu:    getOB(row, C.setupOrtu),
+      setupSiswa:   getOB(row, C.setupSiswa),
 
       // Pengisian
       mulaiInput:   getD(row, C.mulaiInput),
       batasInput:   batasInput,
-      selesaiInput: selesaiInput,
+      selesaiInput: C.selesaiInput >= 0 ? toOptBool(row[C.selesaiInput]) : null,
 
-      // Pembuatan
-      approval:             getB(row, C.approval),
-      coda:                 getB(row, C.coda),
-      excel:                getB(row, C.excel),
-      foto:                 getB(row, C.foto),
-      excelApproval:        getB(row, C.excelApproval),
-      codaPembuatanRapor:   getB(row, C.codaPembuatanRapor),
-      pluginPembuatanRapor: getB(row, C.pluginPembuatanRapor),
+      // Pembuatan — semua opsional, null = kolom tidak ada/tidak berlaku
+      approval:             getOB(row, C.approval),
+      coda:                 getOB(row, C.coda),
+      excel:                getOB(row, C.excel),
+      foto:                 getOB(row, C.foto),
+      excelApproval:        getOB(row, C.excelApproval),
+      codaPembuatanRapor:   getOB(row, C.codaPembuatanRapor),
+      pluginPembuatanRapor: getOB(row, C.pluginPembuatanRapor),
 
       // Pengiriman — tanggal deadline per penerima
       deliverWalas:    getD(row, C.deliverWalas),
@@ -500,19 +516,19 @@ function readSheet(ss, sheetName, produk) {
       deliverKepsek:   getD(row, C.deliverKepsek),
       deliverOrtu:     getD(row, C.deliverOrtu),
 
-      // Pengiriman — status boolean
-      rWalas:    getB(row, C.rWalas),
-      rIndividu: getB(row, C.rIndividu),
-      rKepsek:   getB(row, C.rKepsek),
-      rOrtu:     getB(row, C.rOrtu),
+      // Pengiriman — status boolean, null = tidak berlaku untuk produk ini
+      rWalas:    getOB(row, C.rWalas),
+      rIndividu: getOB(row, C.rIndividu),
+      rKepsek:   getOB(row, C.rKepsek),
+      rOrtu:     getOB(row, C.rOrtu),
 
       // Distribusi / Paparan
       deadlinePaparanKepsek: getD(row, C.deadlinePaparanKepsek),
-      statusPaparanKepsek:   getB(row, C.statusPaparanKepsek),
+      statusPaparanKepsek:   getOB(row, C.statusPaparanKepsek),
       deadlinePaparanWalas:  getD(row, C.deadlinePaparanWalas),
-      statusPaparanWalas:    getB(row, C.statusPaparanWalas),
+      statusPaparanWalas:    getOB(row, C.statusPaparanWalas),
       deadlinePaparanOrtu:   getD(row, C.deadlinePaparanOrtu),
-      statusPaparanOrtu:     getB(row, C.statusPaparanOrtu),
+      statusPaparanOrtu:     getOB(row, C.statusPaparanOrtu),
 
       statusCatatan:   getS(row, C.statusCatatan),
       polling:         isComplete,
