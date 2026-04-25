@@ -35,6 +35,52 @@ const fetcher = (url: string) =>
     .then((r) => r.json())
     .then((d: IApiResponse<IOpsData>) => { writeLsCache(d); return d; });
 
+/**
+ * Normalisasi nilai opsional dari Apps Script ke boolean | undefined.
+ *
+ * Apps Script mengirim:
+ *   true  → checkbox dicentang
+ *   false → checkbox ada tapi belum dicentang
+ *   null / "" / "N/A" / "-" → sel kosong atau kolom tidak berlaku untuk baris ini
+ *
+ * Hanya true/false yang perlu tampil. Selain itu → undefined (jangan tampilkan).
+ */
+function normOptBool(v: unknown): boolean | undefined {
+  if (v === null || v === undefined) return undefined;
+  if (typeof v === "boolean") return v;
+  const s = String(v).toLowerCase().trim();
+  if (s === "" || s === "n/a" || s === "na" || s === "-" || s === "tidak ada") return undefined;
+  return ["true", "ya", "y", "yes", "1", "✓", "x"].includes(s) ? true : false;
+}
+
+type RawDelivery = ISchoolDelivery & LegacyDeliveryFields & Record<string, unknown>;
+
+/** Normalisasi semua optional boolean field supaya undefined = kolom tidak ada. */
+function normalizePersiapanFlags(raw: RawDelivery): Partial<ISchoolDelivery> {
+  return {
+    dataGuru:             normOptBool(raw.dataGuru),
+    sosialisasi:          normOptBool(raw.sosialisasi),
+    setupGuru:            normOptBool(raw.setupGuru),
+    setupOrtu:            normOptBool(raw.setupOrtu),
+    setupSiswa:           normOptBool(raw.setupSiswa),
+    selesaiInput:         normOptBool(raw.selesaiInput),
+    approval:             normOptBool(raw.approval),
+    coda:                 normOptBool(raw.coda),
+    excel:                normOptBool(raw.excel),
+    foto:                 normOptBool(raw.foto),
+    excelApproval:        normOptBool(raw.excelApproval),
+    codaPembuatanRapor:   normOptBool(raw.codaPembuatanRapor),
+    pluginPembuatanRapor: normOptBool(raw.pluginPembuatanRapor),
+    rWalas:               normOptBool(raw.rWalas),
+    rIndividu:            normOptBool(raw.rIndividu),
+    rKepsek:              normOptBool(raw.rKepsek),
+    rOrtu:                normOptBool(raw.rOrtu),
+    statusPaparanKepsek:  normOptBool(raw.statusPaparanKepsek),
+    statusPaparanWalas:   normOptBool(raw.statusPaparanWalas),
+    statusPaparanOrtu:    normOptBool(raw.statusPaparanOrtu),
+  };
+}
+
 export interface OpsSummary {
   totalActive: number;
   merahCount: number;
@@ -99,6 +145,12 @@ export function useOpsData(): OpsHookResult {
       // di computeTrafficLight(). Jangan di-override di sisi klien supaya angka di
       // summary card (Merah/Kuning/Hijau) konsisten dengan data di spreadsheet.
       trafficLight: raw.trafficLight,
+
+      // Apps Script mengirim false (boolean default checkbox) untuk sel yang kosong
+      // maupun sel yang memang belum dicentang — kita tidak bisa bedakan dari nilai
+      // saja. Heuristik: jika sekolah sudah melewati PERSIAPAN, item persiapan yang
+      // masih false pasti N/A (bukan pending) — kalau pending, stage tidak akan advance.
+      ...normalizePersiapanFlags(raw),
     };
   });
 
