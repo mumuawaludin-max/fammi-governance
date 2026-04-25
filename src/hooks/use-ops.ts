@@ -53,7 +53,7 @@ function normOptBool(v: unknown): boolean | undefined {
   return ["true", "ya", "y", "yes", "1", "✓", "x"].includes(s) ? true : false;
 }
 
-type RawDelivery = ISchoolDelivery & LegacyDeliveryFields & Record<string, unknown>;
+type RawDelivery = Record<string, unknown> & LegacyDeliveryFields & Partial<ISchoolDelivery>;
 
 /** Normalisasi semua optional boolean field supaya undefined = kolom tidak ada. */
 function normalizePersiapanFlags(raw: RawDelivery): Partial<ISchoolDelivery> {
@@ -120,7 +120,7 @@ export function useOpsData(): OpsHookResult {
   // versi lama yang mungkin punya pemetaan kolom salah atau nama field lama.
   const deliveries: ISchoolDelivery[] = (opsData?.deliveries ?? []).map((d) => {
     // Cast untuk mengakses field lama (deliverRapor1/2/3) yang mungkin ada di respons API lama
-    const raw = d as ISchoolDelivery & LegacyDeliveryFields;
+    const raw = d as unknown as RawDelivery;
 
     return {
       ...raw,
