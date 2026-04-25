@@ -229,29 +229,25 @@ export function OpsSchoolModal({ delivery: d, onClose }: OpsSchoolModalProps) {
   const produkLabel = PRODUK_LABEL[d.produk] ?? d.produk;
   const aksi = rekomendasiAksi(d);
 
-  // Build milestone groups per produk
-  const persiapanItems =
-    d.produk === "RK" ? [
-      { done: d.dataSiswa,              label: "Data siswa" },
-      { done: d.sosialisasi??false,     label: "Sosialisasi" },
-      { done: d.setupGuru??false,       label: "Setup guru" },
-      { done: d.setupOrtu??false,       label: "Setup ortu" },
-      { done: d.setupSiswa??false,      label: "Setup siswa" },
-    ] : d.produk === "CP" ? [
-      { done: d.dataSiswa,              label: "Data siswa" },
-      { done: d.setupGuru??false,       label: "Setup guru" },
-    ] : [
-      { done: d.dataSiswa,              label: "Data siswa" },
-      { done: d.sosialisasi??false,     label: "Sosialisasi" },
-      { done: d.setupGuru??false,       label: "Setup guru" },
-      { done: d.setupOrtu??false,       label: "Setup ortu" },
-      { done: d.setupSiswa??false,      label: "Setup siswa" },
-    ];
+  // Helper: hanya masukkan item jika kolom memang ada di spreadsheet (bukan undefined)
+  function opt(v: boolean | undefined, label: string): { done: boolean; label: string }[] {
+    return v !== undefined ? [{ done: v, label }] : [];
+  }
 
-  // Pengisian — berlaku untuk semua produk
+  // Persiapan — tampilkan hanya kolom yang ada (undefined = tidak ada checkbox di sheet)
+  const persiapanItems: { done: boolean; label: string }[] = [
+    { done: d.dataSiswa, label: "Data siswa" },
+    ...opt(d.dataGuru,    "Data guru"),
+    ...opt(d.sosialisasi, "Sosialisasi"),
+    ...opt(d.setupGuru,   "Setup guru"),
+    ...opt(d.setupOrtu,   "Setup ortu"),
+    ...opt(d.setupSiswa,  "Setup siswa"),
+  ];
+
+  // Pengisian — mulaiInput ada tanggal = sudah mulai; selesaiInput hanya muncul jika ada kolomnya
   const pengisianItems: { done: boolean; label: string }[] = [
-    { done: !!d.mulaiInput,          label: "Mulai input" },
-    { done: d.selesaiInput ?? false, label: "Selesai input" },
+    { done: !!d.mulaiInput, label: "Mulai input" },
+    ...opt(d.selesaiInput,  "Selesai input"),
   ];
 
   const kelengkapanItems: { done: boolean; label: string }[] = [];
