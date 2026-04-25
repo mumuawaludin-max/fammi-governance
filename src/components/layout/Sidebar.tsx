@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -62,14 +63,19 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Logo */}
       <div className="flex items-center justify-between px-6 py-5 border-b border-fammi-50">
         <Link href={ROUTES.HOME} className="flex items-center gap-3" onClick={onClose}>
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-wallet text-white font-bold text-lg">
-            f
-          </span>
+          <Image
+            src="/logo-fammi.png"
+            alt="Fammi"
+            width={36}
+            height={36}
+            className="rounded-xl"
+            priority
+          />
           <div className="flex flex-col leading-tight">
             <span className="text-sm font-bold tracking-tight text-text-primary">
-              fammi<span className="text-fammi">.</span>
+              Fammi
             </span>
-            <span className="text-[10px] text-text-secondary">Governance OS</span>
+            <span className="text-[10px] text-text-secondary">Fammi Governance</span>
           </div>
         </Link>
         <button
@@ -111,14 +117,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           );
         })}
       </nav>
-
-      {/* Mission callout */}
-      <div className="mx-3 mb-3 rounded-[20px] bg-gradient-fammi-soft p-4 text-xs">
-        <p className="font-semibold text-fammi-dark mb-0.5">55 dari 4.000 sekolah</p>
-        <p className="text-text-secondary leading-relaxed">
-          Setiap angka di sini adalah anak yang terlayani.
-        </p>
-      </div>
 
       {/* User footer */}
       <div className="px-4 py-4 border-t border-fammi-50 flex items-center gap-3">

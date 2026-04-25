@@ -18,6 +18,7 @@ import { BentoCard } from "@/components/ui/BentoCard";
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/cn";
 import { useOpsData } from "@/hooks/use-ops";
+import { useAppStore } from "@/stores/app-store";
 
 // ─── Animation variants ──────────────────────────────────────────────────────
 
@@ -58,6 +59,7 @@ function greeting(): string {
 
 export default function HomePage() {
   const { summary } = useOpsData();
+  const user = useAppStore((s) => s.user);
 
   const BENTO_CARDS = [
     {
@@ -133,7 +135,7 @@ export default function HomePage() {
       {/* 1. Greeting */}
       <motion.section variants={section}>
         <p className="text-2xl font-bold text-text-primary">
-          {greeting()}, Mumu!{" "}
+          {greeting()}, {user?.name ?? "—"}!{" "}
           <span className="text-text-secondary font-normal">Fammi hari ini...</span>
         </p>
         <p className="text-sm text-text-secondary mt-1">
