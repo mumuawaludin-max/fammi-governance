@@ -4,7 +4,8 @@ import type { IOpsData } from "@/types";
 
 const APPS_SCRIPT_URL = process.env.APPS_SCRIPT_URL!;
 const API_SECRET      = process.env.APPS_SCRIPT_SECRET!;
-const CACHE_DURATION  = 5 * 60 * 1000;
+// 60 detik — ops adalah data operasional yang perlu cepat terlihat setelah update spreadsheet
+const CACHE_DURATION  = 60 * 1000;
 
 let cache: { data: IOpsData; timestamp: number } | null = null;
 

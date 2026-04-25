@@ -40,7 +40,13 @@ export function useOpsData(): OpsHookResult {
   const { data, error, isLoading, mutate } = useSWR<IApiResponse<IOpsData>>(
     "/api/ops",
     fetcher,
-    { refreshInterval: 5 * 60 * 1000, revalidateOnFocus: false },
+    {
+      // Poll setiap 60 detik agar perubahan spreadsheet cepat terlihat
+      refreshInterval: 60 * 1000,
+      // Refresh langsung saat user kembali ke tab — paling impactful untuk UX
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+    },
   );
 
   const opsData = data?.data;
