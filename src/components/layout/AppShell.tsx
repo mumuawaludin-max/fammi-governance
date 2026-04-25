@@ -59,8 +59,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   if (!mounted) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="flex h-14 w-14 items-center justify-center rounded-[20px] bg-fammi-100 animate-pulse">
-          <span className="text-fammi font-bold text-2xl">f</span>
+        <div className="relative flex h-16 w-16 items-center justify-center">
+          <svg className="absolute inset-0 animate-spin" viewBox="0 0 64 64" fill="none">
+            <circle cx="32" cy="32" r="28" stroke="#EDE5FF" strokeWidth="4" />
+            <path d="M32 4 A28 28 0 0 1 60 32" stroke="#6323DA" strokeWidth="4" strokeLinecap="round" />
+          </svg>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-fammi.png" alt="Fammi" className="h-10 w-10 rounded-xl object-cover" />
         </div>
       </div>
     );
@@ -73,8 +78,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   if (!isRouteAllowed(user, pathname)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="flex h-14 w-14 items-center justify-center rounded-[20px] bg-fammi-100 animate-pulse">
-          <span className="text-fammi font-bold text-2xl">f</span>
+        <div className="relative flex h-16 w-16 items-center justify-center">
+          <svg className="absolute inset-0 animate-spin" viewBox="0 0 64 64" fill="none">
+            <circle cx="32" cy="32" r="28" stroke="#EDE5FF" strokeWidth="4" />
+            <path d="M32 4 A28 28 0 0 1 60 32" stroke="#6323DA" strokeWidth="4" strokeLinecap="round" />
+          </svg>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-fammi.png" alt="Fammi" className="h-10 w-10 rounded-xl object-cover" />
         </div>
       </div>
     );
