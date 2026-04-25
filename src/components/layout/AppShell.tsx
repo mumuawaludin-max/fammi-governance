@@ -8,7 +8,7 @@ import { TopBar } from "./TopBar";
 import { BottomNav } from "./BottomNav";
 import { LoginView } from "@/components/auth/LoginView";
 import { ROUTES } from "@/lib/constants";
-import type { MenuKey } from "@/types";
+import type { MenuKey, IAuthUser } from "@/types";
 
 const PERM_TO_ROUTE: Array<{ key: MenuKey; route: string }> = [
   { key: "missionControl", route: ROUTES.HOME },
@@ -19,6 +19,15 @@ const PERM_TO_ROUTE: Array<{ key: MenuKey; route: string }> = [
   { key: "tim",            route: ROUTES.TEAM },
   { key: "impact",         route: ROUTES.IMPACT },
 ];
+
+function isRouteAllowed(user: IAuthUser, pathname: string): boolean {
+  const match = PERM_TO_ROUTE.find((p) =>
+    p.route === "/" ? pathname === "/" : pathname.startsWith(p.route),
+  );
+  // Route tidak dikenali (mis. /settings) — biarkan lewat
+  if (!match) return true;
+  return user.permissions[match.key] === true;
+}
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { sidebarOpen, setSidebarOpen, user } = useAppStore();
@@ -38,16 +47,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("resize", onResize);
   }, [setSidebarOpen]);
 
-  // Redirect ke halaman pertama yang boleh diakses jika halaman saat ini tidak diizinkan
+  // Redirect ke halaman pertama yang diizinkan (pakai useEffect hanya untuk trigger navigate)
   useEffect(() => {
-    if (!user) return;
-    const currentPerm = PERM_TO_ROUTE.find((p) =>
-      p.route === "/" ? pathname === "/" : pathname.startsWith(p.route),
-    );
-    if (currentPerm && user.permissions[currentPerm.key]) return;
+    if (!user || !mounted) return;
+    if (isRouteAllowed(user, pathname)) return;
     const firstAllowed = PERM_TO_ROUTE.find((p) => user.permissions[p.key]);
     if (firstAllowed) router.replace(firstAllowed.route);
-  }, [user, pathname, router]);
+  }, [user, pathname, mounted, router]);
 
   // Belum hydrate — tampilkan layar kosong sebentar
   if (!mounted) {
@@ -62,6 +68,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   // Belum login — tampilkan login view
   if (!user) return <LoginView />;
+
+  // Route tidak diizinkan — tampilkan blank saat router.replace() bekerja
+  if (!isRouteAllowed(user, pathname)) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex h-14 w-14 items-center justify-center rounded-[20px] bg-fammi-100 animate-pulse">
+          <span className="text-fammi font-bold text-2xl">f</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-background">
