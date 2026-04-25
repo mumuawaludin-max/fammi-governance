@@ -30,6 +30,9 @@ export function ImpactCard() {
   const router = useRouter();
   const { deliveries, isLoading } = useOpsData();
 
+  // Belum ada data sama sekali (loading pertama, cache kosong)
+  const noData = isLoading && deliveries.length === 0;
+
   // Total siswa terlayani = sum JML_SISWA dari seluruh produk
   const totalSiswa = deliveries.reduce((sum, d) => sum + (d.jumlahSiswa ?? 0), 0);
 
@@ -69,22 +72,30 @@ export function ImpactCard() {
           percentage={pct}
           size={140}
           strokeWidth={12}
-          label={isLoading ? "—" : `${totalSekolah} dari ${SCHOOL_TARGET}`}
+          label={noData ? "..." : `${totalSekolah} dari ${SCHOOL_TARGET}`}
           sublabel="sekolah"
         />
         <div className="flex flex-col gap-4">
           {/* Siswa terlayani */}
           <div>
-            <p className="font-mono text-3xl font-bold text-text-primary tabular-nums leading-none">
-              {isLoading ? "—" : siswaCount.toLocaleString("id-ID")}
-            </p>
+            {noData ? (
+              <div className="h-8 w-20 rounded-lg bg-fammi-100 animate-pulse mb-1" />
+            ) : (
+              <p className="font-mono text-3xl font-bold text-text-primary tabular-nums leading-none">
+                {siswaCount.toLocaleString("id-ID")}
+              </p>
+            )}
             <p className="text-xs text-text-secondary mt-0.5">Siswa terlayani</p>
           </div>
           {/* Total sekolah di seluruh produk */}
           <div>
-            <p className="font-mono text-3xl font-bold text-text-primary tabular-nums leading-none">
-              {isLoading ? "—" : sekolahCount.toLocaleString("id-ID")}
-            </p>
+            {noData ? (
+              <div className="h-8 w-14 rounded-lg bg-fammi-100 animate-pulse mb-1" />
+            ) : (
+              <p className="font-mono text-3xl font-bold text-text-primary tabular-nums leading-none">
+                {sekolahCount.toLocaleString("id-ID")}
+              </p>
+            )}
             <p className="text-xs text-text-secondary mt-0.5">Total sekolah (semua produk)</p>
           </div>
         </div>
