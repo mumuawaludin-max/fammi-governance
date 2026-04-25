@@ -14,7 +14,26 @@ type LegacyDeliveryFields = {
   deliverRapor3?: string;
 };
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
+const LS_KEY = "fammi_ops_cache";
+
+function readLsCache(): IApiResponse<IOpsData> | undefined {
+  if (typeof window === "undefined") return undefined;
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    return raw ? (JSON.parse(raw) as IApiResponse<IOpsData>) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function writeLsCache(data: IApiResponse<IOpsData>) {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(data)); } catch { /* quota ignore */ }
+}
+
+const fetcher = (url: string) =>
+  fetch(url)
+    .then((r) => r.json())
+    .then((d: IApiResponse<IOpsData>) => { writeLsCache(d); return d; });
 
 export interface OpsSummary {
   totalActive: number;
@@ -41,11 +60,11 @@ export function useOpsData(): OpsHookResult {
     "/api/ops",
     fetcher,
     {
-      // Poll setiap 60 detik agar perubahan spreadsheet cepat terlihat
-      refreshInterval: 60 * 1000,
-      // Refresh langsung saat user kembali ke tab — paling impactful untuk UX
-      revalidateOnFocus: true,
+      fallbackData:       readLsCache(),
+      refreshInterval:    60 * 1000,
+      revalidateOnFocus:  true,
       revalidateOnReconnect: true,
+      keepPreviousData:   true,
     },
   );
 

@@ -1,14 +1,29 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import { useAppStore } from "@/stores/app-store";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import { BottomNav } from "./BottomNav";
 import { LoginView } from "@/components/auth/LoginView";
+import { ROUTES } from "@/lib/constants";
+import type { MenuKey } from "@/types";
+
+const PERM_TO_ROUTE: Array<{ key: MenuKey; route: string }> = [
+  { key: "missionControl", route: ROUTES.HOME },
+  { key: "operasional",    route: ROUTES.OPS },
+  { key: "keuangan",       route: ROUTES.FINANCE },
+  { key: "produk",         route: ROUTES.PRODUCT },
+  { key: "salesGrowth",    route: ROUTES.GROWTH },
+  { key: "tim",            route: ROUTES.TEAM },
+  { key: "impact",         route: ROUTES.IMPACT },
+];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { sidebarOpen, setSidebarOpen, user } = useAppStore();
+  const router   = useRouter();
+  const pathname = usePathname();
 
   // Hindari hydration mismatch: Zustand persist baru tersedia setelah mount
   const [mounted, setMounted] = useState(false);
@@ -22,6 +37,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, [setSidebarOpen]);
+
+  // Redirect ke halaman pertama yang boleh diakses jika halaman saat ini tidak diizinkan
+  useEffect(() => {
+    if (!user) return;
+    const currentPerm = PERM_TO_ROUTE.find((p) =>
+      p.route === "/" ? pathname === "/" : pathname.startsWith(p.route),
+    );
+    if (currentPerm && user.permissions[currentPerm.key]) return;
+    const firstAllowed = PERM_TO_ROUTE.find((p) => user.permissions[p.key]);
+    if (firstAllowed) router.replace(firstAllowed.route);
+  }, [user, pathname, router]);
 
   // Belum hydrate — tampilkan layar kosong sebentar
   if (!mounted) {
