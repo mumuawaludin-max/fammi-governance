@@ -72,7 +72,8 @@ export function ImpactCard() {
           percentage={pct}
           size={140}
           strokeWidth={12}
-          label={noData ? "..." : `${totalSekolah} dari ${SCHOOL_TARGET}`}
+          loading={noData}
+          label={noData ? "" : `${totalSekolah} dari ${SCHOOL_TARGET}`}
           sublabel="sekolah"
         />
         <div className="flex flex-col gap-4">

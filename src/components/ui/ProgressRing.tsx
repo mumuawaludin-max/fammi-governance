@@ -13,6 +13,7 @@ export interface ProgressRingProps {
   sublabel?: string;
   className?: string;
   duration?: number;
+  loading?: boolean;
 }
 
 export function ProgressRing({
@@ -25,6 +26,7 @@ export function ProgressRing({
   sublabel,
   className,
   duration = 1400,
+  loading = false,
 }: ProgressRingProps) {
   const safePercentage = Math.max(0, Math.min(100, percentage));
   const radius = (size - strokeWidth) / 2;
@@ -32,38 +34,51 @@ export function ProgressRing({
 
   const [progress, setProgress] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
-  const hasAnimated = useRef(false);
+  const rafRef = useRef<number | null>(null);
+  const visibleRef = useRef(false);
+
+  useEffect(() => {
+    if (!visibleRef.current) return;
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    if (safePercentage === 0) { setProgress(0); return; }
+
+    const start = performance.now();
+    const step = (now: number) => {
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setProgress(safePercentage * eased);
+      if (t < 1) { rafRef.current = requestAnimationFrame(step); }
+    };
+    rafRef.current = requestAnimationFrame(step);
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+  }, [safePercentage, duration]);
 
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-
-    const runAnimation = () => {
-      if (hasAnimated.current) return;
-      hasAnimated.current = true;
-      const start = performance.now();
-      const step = (now: number) => {
-        const elapsed = now - start;
-        const t = Math.min(1, elapsed / duration);
-        const eased = 1 - Math.pow(1 - t, 3);
-        setProgress(safePercentage * eased);
-        if (t < 1) requestAnimationFrame(step);
-      };
-      requestAnimationFrame(step);
-    };
-
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) runAnimation();
+          if (entry.isIntersecting && !visibleRef.current) {
+            visibleRef.current = true;
+            if (rafRef.current) cancelAnimationFrame(rafRef.current);
+            const start = performance.now();
+            const step = (now: number) => {
+              const t = Math.min(1, (now - start) / duration);
+              const eased = 1 - Math.pow(1 - t, 3);
+              setProgress(safePercentage * eased);
+              if (t < 1) { rafRef.current = requestAnimationFrame(step); }
+            };
+            rafRef.current = requestAnimationFrame(step);
+          }
         });
       },
       { threshold: 0.3 },
     );
-
     observer.observe(el);
     return () => observer.disconnect();
-  }, [safePercentage, duration]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const offset = circumference - (progress / 100) * circumference;
 
@@ -103,10 +118,14 @@ export function ProgressRing({
           style={{ transition: "stroke-dashoffset 120ms linear" }}
         />
       </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-        <span className="font-mono text-3xl font-bold tabular-nums text-text-primary">
-          {Math.round(progress)}%
-        </span>
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-2">
+        {loading ? (
+          <div className="h-7 w-12 rounded-lg bg-fammi-100 animate-pulse" />
+        ) : (
+          <span className="font-mono text-3xl font-bold tabular-nums text-text-primary">
+            {Math.round(progress)}%
+          </span>
+        )}
         {label ? (
           <span className="text-xs font-medium text-text-secondary mt-1">
             {label}
