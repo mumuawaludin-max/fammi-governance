@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Delete, Loader2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useAppStore } from "@/stores/app-store";
