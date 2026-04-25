@@ -197,32 +197,35 @@ function isPersiapanDone(d) {
   return true;
 }
 
+// Helper: null berarti kolom tidak berlaku (N/A), skip dari pengecekan
+function hasValue(v) { return v !== undefined && v !== null; }
+
 function isPembuatanDone(d) {
   var items = [];
-  if (d.approval !== undefined)            items.push(d.approval);
-  if (d.coda !== undefined)                items.push(d.coda);
-  if (d.excel !== undefined)               items.push(d.excel);
-  if (d.foto !== undefined)                items.push(d.foto);
-  if (d.excelApproval !== undefined)       items.push(d.excelApproval);
-  if (d.codaPembuatanRapor !== undefined)  items.push(d.codaPembuatanRapor);
-  if (d.pluginPembuatanRapor !== undefined) items.push(d.pluginPembuatanRapor);
+  if (hasValue(d.approval))            items.push(d.approval);
+  if (hasValue(d.coda))                items.push(d.coda);
+  if (hasValue(d.excel))               items.push(d.excel);
+  if (hasValue(d.foto))                items.push(d.foto);
+  if (hasValue(d.excelApproval))       items.push(d.excelApproval);
+  if (hasValue(d.codaPembuatanRapor))  items.push(d.codaPembuatanRapor);
+  if (hasValue(d.pluginPembuatanRapor)) items.push(d.pluginPembuatanRapor);
   return items.length === 0 || items.every(function(v) { return v === true; });
 }
 
 function isPengirimanDone(d) {
   var items = [];
-  if (d.rWalas !== undefined)   items.push(d.rWalas);
-  if (d.rIndividu !== undefined) items.push(d.rIndividu);
-  if (d.rKepsek !== undefined)  items.push(d.rKepsek);
-  if (d.rOrtu !== undefined)    items.push(d.rOrtu);
+  if (hasValue(d.rWalas))    items.push(d.rWalas);
+  if (hasValue(d.rIndividu)) items.push(d.rIndividu);
+  if (hasValue(d.rKepsek))   items.push(d.rKepsek);
+  if (hasValue(d.rOrtu))     items.push(d.rOrtu);
   return items.length === 0 || items.every(function(v) { return v === true; });
 }
 
 function isDistribusiDone(d) {
   var items = [];
-  if (d.statusPaparanKepsek !== undefined) items.push(d.statusPaparanKepsek);
-  if (d.statusPaparanWalas !== undefined)  items.push(d.statusPaparanWalas);
-  if (d.statusPaparanOrtu !== undefined)   items.push(d.statusPaparanOrtu);
+  if (hasValue(d.statusPaparanKepsek)) items.push(d.statusPaparanKepsek);
+  if (hasValue(d.statusPaparanWalas))  items.push(d.statusPaparanWalas);
+  if (hasValue(d.statusPaparanOrtu))   items.push(d.statusPaparanOrtu);
   return items.length === 0 || items.every(function(v) { return v === true; });
 }
 
@@ -251,7 +254,7 @@ function computeProgress(d) {
   ];
   var total = 0, done = 0;
   for (var i = 0; i < bools.length; i++) {
-    if (bools[i] !== undefined) {
+    if (bools[i] !== undefined && bools[i] !== null) {
       total++;
       if (bools[i] === true) done++;
     }
