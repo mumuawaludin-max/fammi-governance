@@ -118,7 +118,7 @@ export function useOpsData(): OpsHookResult {
 
   // Normalisasi deliveries di sisi klien untuk menangani data dari Apps Script
   // versi lama yang mungkin punya pemetaan kolom salah atau nama field lama.
-  const deliveries: ISchoolDelivery[] = (opsData?.deliveries ?? []).map((d) => {
+  const deliveries = (opsData?.deliveries ?? []).map((d) => {
     // Cast untuk mengakses field lama (deliverRapor1/2/3) yang mungkin ada di respons API lama
     const raw = d as unknown as RawDelivery;
 
@@ -152,7 +152,7 @@ export function useOpsData(): OpsHookResult {
       // masih false pasti N/A (bukan pending) — kalau pending, stage tidak akan advance.
       ...normalizePersiapanFlags(raw),
     };
-  });
+  }) as ISchoolDelivery[];
 
   const active  = deliveries.filter((d) => !d.isComplete);
   const selesai = deliveries.filter((d) =>  d.isComplete);
