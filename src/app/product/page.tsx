@@ -4,7 +4,7 @@ export default function ProductPage() {
   return (
     <ComingSoonCard
       module="Produk"
-      description="Feature lifecycle, CSAT per fitur, NPS, dan roadmap prioritas."
+      description="Feature lifecycle, CSAT per fitur, NPS, dan roadmap prioritas pengembangan."
     />
   );
 }

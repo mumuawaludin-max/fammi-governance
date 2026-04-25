@@ -17,6 +17,7 @@ import { ImpactCard } from "@/components/ui/ImpactCard";
 import { BentoCard } from "@/components/ui/BentoCard";
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/cn";
+import { useOpsData } from "@/hooks/use-ops";
 
 // ─── Animation variants ──────────────────────────────────────────────────────
 
@@ -53,79 +54,75 @@ function greeting(): string {
   return "Selamat malam";
 }
 
-// ─── Bento data (mock — wired saat API live) ──────────────────────────────────
-
-const BENTO_CARDS = [
-  {
-    href: ROUTES.OPS,
-    icon: Building2,
-    iconColor: "text-orange-500",
-    bg: "bg-orange-50",
-    border: "border-orange-200",
-    heroValue: "3",
-    heroLabel: "sekolah butuh perhatian hari ini",
-    sub1: "5 at risk",
-    sub2: "55 aktif",
-  },
-  {
-    href: ROUTES.GROWTH,
-    icon: TrendingUp,
-    iconColor: "text-green-600",
-    bg: "bg-green-50",
-    border: "border-green-200",
-    heroValue: "Rp 420Jt",
-    heroLabel: "Weighted Pipeline Value",
-    sub1: "12 deals aktif",
-    sub2: "3 perlu follow-up",
-  },
-  {
-    href: ROUTES.PRODUCT,
-    icon: Layers,
-    iconColor: "text-blue-600",
-    bg: "bg-blue-50",
-    border: "border-blue-200",
-    heroValue: "7 fitur",
-    heroLabel: "sedang dalam development",
-    sub1: "2 di UAT",
-    sub2: "4 rilis bulan ini",
-  },
-  {
-    href: ROUTES.TEAM,
-    icon: Heart,
-    iconColor: "text-pink-500",
-    bg: "bg-pink-50",
-    border: "border-pink-200",
-    heroValue: "7.8/10",
-    heroLabel: "happiness score tim",
-    sub1: "1 high burnout",
-    sub2: "92% participation",
-  },
-  {
-    href: ROUTES.OPS,
-    icon: AlertTriangle,
-    iconColor: "text-red-500",
-    bg: "bg-red-50",
-    border: "border-red-200",
-    heroValue: "4 item",
-    heroLabel: "overdue atau at risk",
-    sub1: "deadline < 48 jam: 2",
-  },
-  {
-    href: ROUTES.IMPACT,
-    icon: BarChart2,
-    iconColor: "text-fammi",
-    bg: "bg-fammi-50",
-    border: "border-fammi-200",
-    heroValue: "1.38%",
-    heroLabel: "dari target 4.000 sekolah",
-    sub1: "55 sekolah aktif",
-    sub2: "14.250 siswa",
-  },
-] as const;
-
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
 export default function HomePage() {
+  const { summary } = useOpsData();
+
+  const BENTO_CARDS = [
+    {
+      href: ROUTES.OPS,
+      icon: Building2,
+      iconColor: "text-orange-500",
+      bg: "bg-orange-50",
+      border: "border-orange-200",
+      heroValue: summary ? String(summary.merahCount) : "—",
+      heroLabel: "sekolah butuh perhatian",
+      sub1: summary ? `${summary.kuningCount} at risk` : "—",
+      sub2: summary ? `${summary.totalActive} aktif` : "—",
+    },
+    {
+      href: ROUTES.GROWTH,
+      icon: TrendingUp,
+      iconColor: "text-green-600",
+      bg: "bg-green-50",
+      border: "border-green-200",
+      heroValue: "—",
+      heroLabel: "Weighted Pipeline Value",
+      sub1: "belum terhubung",
+    },
+    {
+      href: ROUTES.PRODUCT,
+      icon: Layers,
+      iconColor: "text-blue-600",
+      bg: "bg-blue-50",
+      border: "border-blue-200",
+      heroValue: "—",
+      heroLabel: "fitur dalam development",
+      sub1: "belum terhubung",
+    },
+    {
+      href: ROUTES.TEAM,
+      icon: Heart,
+      iconColor: "text-pink-500",
+      bg: "bg-pink-50",
+      border: "border-pink-200",
+      heroValue: "—",
+      heroLabel: "happiness score tim",
+      sub1: "belum terhubung",
+    },
+    {
+      href: ROUTES.OPS,
+      icon: AlertTriangle,
+      iconColor: "text-red-500",
+      bg: "bg-red-50",
+      border: "border-red-200",
+      heroValue: summary ? String(summary.merahCount) : "—",
+      heroLabel: "sekolah butuh perhatian",
+      sub1: summary ? `${summary.kuningCount} sekolah at risk` : "—",
+    },
+    {
+      href: ROUTES.IMPACT,
+      icon: BarChart2,
+      iconColor: "text-fammi",
+      bg: "bg-fammi-50",
+      border: "border-fammi-200",
+      heroValue: "—",
+      heroLabel: "dari target 4.000 sekolah",
+      sub1: "belum terhubung",
+    },
+  ] as const;
+
   return (
     <motion.div
       variants={page}
@@ -145,8 +142,12 @@ export default function HomePage() {
             day: "numeric",
             month: "long",
             year: "numeric",
-          })}{" "}
-          <span className="text-danger font-medium">· 2 sekolah butuh perhatian segera</span>
+          })}
+          {summary && summary.merahCount > 0 && (
+            <span className="ml-2 text-danger font-medium">
+              · {summary.merahCount} sekolah butuh perhatian segera
+            </span>
+          )}
         </p>
       </motion.section>
 

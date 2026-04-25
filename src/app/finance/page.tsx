@@ -4,7 +4,7 @@ export default function FinancePage() {
   return (
     <ComingSoonCard
       module="Keuangan"
-      description="Runway, cashflow, burn rate, RPS, DCR, dan CCC dalam satu halaman."
+      description="Runway, cashflow, burn rate, dan kesehatan finansial Fammi secara real-time."
     />
   );
 }

@@ -3,12 +3,12 @@ import { cn } from "@/lib/cn";
 import type { DeliveryStage, ISchoolDelivery } from "@/types";
 
 const STAGES: { key: DeliveryStage; label: string }[] = [
-  { key: "BELUM_MULAI", label: "Belum Mulai" },
-  { key: "PERSIAPAN", label: "Persiapan" },
-  { key: "PENGERJAAN", label: "Pengerjaan" },
-  { key: "LAPORAN", label: "Laporan" },
-  { key: "PAPARAN", label: "Paparan" },
-  { key: "SELESAI", label: "Selesai" },
+  { key: "PERSIAPAN",  label: "Persiapan" },
+  { key: "PENGISIAN",  label: "Pengisian" },
+  { key: "PEMBUATAN",  label: "Pembuatan" },
+  { key: "PENGIRIMAN", label: "Pengiriman" },
+  { key: "DISTRIBUSI", label: "Distribusi" },
+  { key: "SELESAI",    label: "Selesai" },
 ];
 
 interface OpsPipelineProps {

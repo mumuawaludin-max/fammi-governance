@@ -1,13 +1,18 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAppStore } from "@/stores/app-store";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 import { BottomNav } from "./BottomNav";
+import { LoginView } from "@/components/auth/LoginView";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { sidebarOpen, setSidebarOpen } = useAppStore();
+  const { sidebarOpen, setSidebarOpen, user } = useAppStore();
+
+  // Hindari hydration mismatch: Zustand persist baru tersedia setelah mount
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   // Close drawer on resize to desktop
   useEffect(() => {
@@ -17,6 +22,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, [setSidebarOpen]);
+
+  // Belum hydrate — tampilkan layar kosong sebentar
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex h-14 w-14 items-center justify-center rounded-[20px] bg-fammi-100 animate-pulse">
+          <span className="text-fammi font-bold text-2xl">f</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Belum login — tampilkan login view
+  if (!user) return <LoginView />;
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -30,10 +49,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       )}
 
       {/* Sidebar — fixed on desktop, drawer on mobile */}
-      <Sidebar
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-      />
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main column */}
       <div className="flex flex-1 flex-col md:ml-[260px]">

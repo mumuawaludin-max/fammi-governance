@@ -16,16 +16,23 @@ import {
 import { cn } from "@/lib/cn";
 import { ROUTES } from "@/lib/constants";
 import { useAppStore } from "@/stores/app-store";
+import type { MenuKey } from "@/types";
 
-const NAV_ITEMS = [
-  { href: ROUTES.HOME, label: "Mission Control", Icon: LayoutDashboard },
-  { href: ROUTES.OPS, label: "Operasional", Icon: Building2 },
-  { href: ROUTES.FINANCE, label: "Keuangan", Icon: Wallet },
-  { href: ROUTES.PRODUCT, label: "Produk", Icon: Layers },
-  { href: ROUTES.GROWTH, label: "Sales & Growth", Icon: TrendingUp },
-  { href: ROUTES.TEAM, label: "Tim", Icon: Heart },
-  { href: ROUTES.IMPACT, label: "Impact", Icon: Globe },
-] as const;
+// permKey harus match MenuKey → IUserPermissions keys
+const NAV_ITEMS: {
+  href: string;
+  label: string;
+  Icon: React.ElementType;
+  permKey: MenuKey;
+}[] = [
+  { href: ROUTES.HOME,    label: "Mission Control", Icon: LayoutDashboard, permKey: "missionControl" },
+  { href: ROUTES.OPS,     label: "Operasional",     Icon: Building2,       permKey: "operasional"    },
+  { href: ROUTES.FINANCE, label: "Keuangan",         Icon: Wallet,          permKey: "keuangan"       },
+  { href: ROUTES.PRODUCT, label: "Produk",           Icon: Layers,          permKey: "produk"         },
+  { href: ROUTES.GROWTH,  label: "Sales & Growth",   Icon: TrendingUp,      permKey: "salesGrowth"    },
+  { href: ROUTES.TEAM,    label: "Tim",              Icon: Heart,           permKey: "tim"            },
+  { href: ROUTES.IMPACT,  label: "Impact",           Icon: Globe,           permKey: "impact"         },
+];
 
 interface SidebarProps {
   isOpen: boolean;
@@ -33,19 +40,22 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
-  const pathname = usePathname();
-  const user = useAppStore((s) => s.user);
+  const pathname  = usePathname();
+  const user      = useAppStore((s) => s.user);
+  const logout    = useAppStore((s) => s.logout);
+
+  // Hanya tampilkan menu yang di-checklist TRUE di RBAC config
+  const visibleNav = user
+    ? NAV_ITEMS.filter((item) => user.permissions[item.permKey] === true)
+    : [];
 
   return (
     <aside
       className={cn(
-        // Base
         "fixed top-0 left-0 z-40 h-screen w-[260px] flex flex-col",
         "bg-white border-r border-fammi-100",
         "transition-transform duration-300 ease-in-out",
-        // Desktop: always visible
         "md:translate-x-0",
-        // Mobile: slide in/out
         isOpen ? "translate-x-0" : "-translate-x-full",
       )}
     >
@@ -73,8 +83,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-3 py-4 flex flex-col gap-0.5">
-        {NAV_ITEMS.map(({ href, label, Icon }) => {
-          const isActive = href === ROUTES.HOME ? pathname === "/" : pathname.startsWith(href);
+        {visibleNav.map(({ href, label, Icon }) => {
+          const isActive = href === ROUTES.HOME
+            ? pathname === "/"
+            : pathname.startsWith(href);
           return (
             <Link
               key={href}
@@ -91,7 +103,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 size={17}
                 className={cn(
                   "shrink-0 transition-colors",
-                  isActive ? "text-white" : "text-text-secondary group-hover:text-fammi",
+                  isActive ? "text-white" : "text-text-secondary",
                 )}
               />
               {label}
@@ -100,7 +112,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         })}
       </nav>
 
-      {/* Mission progress callout */}
+      {/* Mission callout */}
       <div className="mx-3 mb-3 rounded-[20px] bg-gradient-fammi-soft p-4 text-xs">
         <p className="font-semibold text-fammi-dark mb-0.5">55 dari 4.000 sekolah</p>
         <p className="text-text-secondary leading-relaxed">
@@ -111,19 +123,21 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* User footer */}
       <div className="px-4 py-4 border-t border-fammi-50 flex items-center gap-3">
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-fammi-200 text-fammi text-xs font-bold">
-          {user?.name?.[0]?.toUpperCase() ?? "M"}
+          {user?.name?.[0]?.toUpperCase() ?? "?"}
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-xs font-semibold text-text-primary truncate">
-            {user?.name ?? "Mumu"}
+            {user?.name ?? "—"}
           </p>
           <p className="text-[10px] text-text-secondary truncate">
-            {user?.role ?? "Founder"}
+            {user?.role ?? "—"}
           </p>
         </div>
         <button
+          onClick={logout}
           className="p-1.5 rounded-lg text-text-secondary hover:bg-danger/10 hover:text-danger transition-colors"
           aria-label="Logout"
+          title="Keluar"
         >
           <LogOut size={14} />
         </button>

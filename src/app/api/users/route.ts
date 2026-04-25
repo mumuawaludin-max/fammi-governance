@@ -11,7 +11,7 @@ let cache: { data: unknown; timestamp: number } | null = null;
 const SEED_USERS: IUserAccount[] = [
   {
     userId: "USR001",
-    email: "mumu@fammi.id",
+    email: "muhamadnur.awaludin@fammi.ly",
     name: "Mumu",
     role: "Management",
     isActive: true,

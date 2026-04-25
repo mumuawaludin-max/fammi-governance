@@ -14,9 +14,9 @@ const TRAFFIC_CHIPS: { key: TrafficFilter; label: string; color: string; active:
 
 const PRODUK_CHIPS: { key: ProdukFilter; label: string }[] = [
   { key: "all", label: "Semua Produk" },
-  { key: "RAPOR_KARAKTER", label: "Rapor Karakter" },
-  { key: "SCREENING", label: "Screening" },
-  { key: "RAPOR_PAUD", label: "Rapor PAUD" },
+  { key: "RK", label: "Rapor Karakter" },
+  { key: "CP", label: "Capaian Pembelajaran" },
+  { key: "SP", label: "Screening Psikologi" },
 ];
 
 interface OpsFiltersProps {

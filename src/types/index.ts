@@ -1,25 +1,48 @@
 // ============================================================================
-// User Accounts (fammi_users)
+// Auth & RBAC (fammi_rbac_config)
 // ============================================================================
 
-/**
- * Spreadsheet: fammi_users
- * Kolom: userId | email | name | role | isActive | createdAt | lastLogin | notes
- *
- * Contoh baris:
- *   USR001 | mumu@fammi.id | Mumu | FOUNDER | TRUE | 2024-01-01 | 2026-04-24 | Founder
- *   USR002 | rizki@fammi.id | Rizki | OPS_LEAD | TRUE | 2024-03-15 | | Ops lead Jabodetabek
- */
+/** Kunci permission — 1:1 dengan kolom di sheet RBAC */
+export type MenuKey =
+  | "missionControl"
+  | "operasional"
+  | "keuangan"
+  | "produk"
+  | "salesGrowth"
+  | "tim"
+  | "impact";
 
+export interface IUserPermissions {
+  missionControl: boolean;
+  operasional:    boolean;
+  keuangan:       boolean;
+  produk:         boolean;
+  salesGrowth:    boolean;
+  tim:            boolean;
+  impact:         boolean;
+}
+
+/** User yang sudah login — disimpan di Zustand + localStorage */
+export interface IAuthUser {
+  userId:      string;
+  name:        string;
+  email:       string;
+  role:        string;
+  permissions: IUserPermissions;
+}
+
+// ============================================================================
+// User Accounts (fammi_users) — legacy, tidak dipakai untuk auth
+// ============================================================================
 export type UserRole =
-  | "FOUNDER"           // akses penuh semua modul termasuk RBAC
-  | "ADMIN"             // akses penuh kecuali RBAC
-  | "Management"        // alias FOUNDER — untuk kolom spreadsheet
-  | "FINANCE_VIEW"      // hanya baca modul Keuangan
-  | "OPS_LEAD"          // baca + edit Operasional
-  | "PRODUCT_LEAD"      // baca + edit Produk
-  | "GROWTH_LEAD"       // baca + edit Growth
-  | "VIEWER";           // read-only semua modul
+  | "FOUNDER"
+  | "ADMIN"
+  | "Management"
+  | "FINANCE_VIEW"
+  | "OPS_LEAD"
+  | "PRODUCT_LEAD"
+  | "GROWTH_LEAD"
+  | "VIEWER";
 
 export interface IUserAccount {
   userId: string;
@@ -33,85 +56,130 @@ export interface IUserAccount {
 }
 
 // ============================================================================
-// Finance Domain (fammi_finance)
+// Finance Domain
 // ============================================================================
 export interface IFinanceHealth {
+  bulan?: string;
   runway: number;
+  runwayStatus?: "KRITIS" | "PERHATIAN" | "AMAN";
   cashflowPct: number;
-  burnRateChange: number;
-  rps: number;
-  dcr: number;
-  ccc: number;
+  opexRatio?: number;
+  overBudgetCount?: number;
+  wpvTotal?: number;
+  activeDeals?: number;
+  catatan?: string;
 }
 
 // ============================================================================
-// Operations Domain (fammi_operations)
+// Operations Domain — fammi_operations (3 sheets)
+// Sheet: "Rapor Karakter" (RK), "Capaian Pembelajaran PAUD" (CP), "Screening Psikologi" (SP)
 // ============================================================================
-export type DeliveryStage =
-  | "BELUM_MULAI"
-  | "PERSIAPAN"
-  | "PENGERJAAN"
-  | "LAPORAN"
-  | "PAPARAN"
-  | "SELESAI";
+
+/** RK = Rapor Karakter | CP = Capaian Pembelajaran PAUD | SP = Screening Psikologi */
+export type ProductKind = "RK" | "CP" | "SP";
 
 export type TrafficLight = "HIJAU" | "KUNING" | "MERAH";
 
-export type ProductKind = "RAPOR_KARAKTER" | "SCREENING" | "RAPOR_PAUD";
+/**
+ * Stage derived from completed milestones.
+ * PERSIAPAN → PENGISIAN → PEMBUATAN → PENGIRIMAN → DISTRIBUSI → SELESAI
+ */
+export type DeliveryStage =
+  | "PERSIAPAN"    // checklist setup (data siswa, guru/ortu/siswa online) belum semua selesai
+  | "PENGISIAN"    // persiapan done, STATUS_PENGISIAN belum terceklis
+  | "PEMBUATAN"    // pengisian done, checklist pembuatan rapor belum selesai
+  | "PENGIRIMAN"   // pembuatan done, status pengiriman laporan belum selesai
+  | "DISTRIBUSI"   // pengiriman done, paparan ke stakeholder belum selesai
+  | "SELESAI";     // semua milestone selesai (polling = true)
 
 export interface ISchoolDelivery {
-  schoolId: string;
-  schoolName: string;
+  // ── Identity ────────────────────────────────────────────────────────────────
+  no: number;
   produk: ProductKind;
+  schoolName: string;
+  kode?: string;
+  jumlahKelas: number;
+  jumlahSiswa?: number;         // 0 = kolom ada tapi kosong; undefined = kolom tidak ada
+  jumlahGuru?: number;
+  tipeInput?: string;           // "" = kolom ada tapi kosong (persiapan belum done)
+
+  // ── Milestones: Persiapan ────────────────────────────────────────────────────
+  dataSiswa: boolean;           // DATA_SISWA
+  dataGuru?: boolean;           // DATA_GURU (jika ada di sheet)
+  sosialisasi?: boolean;        // SOSIALISASI
+  setupGuru?: boolean;          // GURU_RUMAH_ONLINE
+  setupOrtu?: boolean;          // ORTU_RUMAH_ONLINE
+  setupSiswa?: boolean;         // SISWA_RUMAH_ONLINE
+
+  // ── Milestones: Pengisian ────────────────────────────────────────────────────
+  mulaiInput?: string;          // MULAI_PENGISIAN — ISO date
+  batasInput?: string;          // BATAS_AKHIR_PENGISIAN — ISO date, deadline utama
+  selesaiInput?: boolean;       // STATUS_PENGISIAN
+
+  // ── Milestones: Pembuatan ────────────────────────────────────────────────────
+  approval?: boolean;           // WALAS_APPROVAL
+  coda?: boolean;               // PEMBUATAN_CODA
+  excel?: boolean;              // PEMBUATAN_EXCEL
+  foto?: boolean;               // FOTO
+  excelApproval?: boolean;      // EXCEL_APPROVAL (jika ada)
+  codaPembuatanRapor?: boolean; // CODA_PEMBUATAN_RAPOR (jika ada)
+  pluginPembuatanRapor?: boolean; // PLUGIN_PEMBUATAN_RAPOR (jika ada)
+
+  // ── Pengiriman: deadline tanggal (per penerima) ──────────────────────────────
+  // RK / SP — setiap penerima punya kolom sendiri, multi-alias antar sheet
+  deliverWalas?: string;        // WALAS_DEADLINE_PENGIRIMAN_LAPORAN | DEADLINE_WALAS_KIRIM_RAPOR
+  deliverIndividu?: string;     // INDIIVDU_DEADLINE_PENGIRIMAN_LAPORAN | DEADLINE_INDIVIDU_KIRIM_RAPOR | DEADLINE_KIRIM_RAPOR
+  deliverKepsek?: string;       // KEPSEK_DEADLINE_PENGIRIMAN_LAPORAN  | DEADLINE_KEPSEK_KIRIM_RAPOR
+  // CP — satu kolom untuk orang tua
+  deliverOrtu?: string;         // DEADLINE_KIRIM_RAPOR
+
+  // ── Pengiriman: status boolean ───────────────────────────────────────────────
+  rWalas?: boolean;             // WALAS_STATUS_PENGIRIMAN_LAPORAN
+  rIndividu?: boolean;          // INDIVIDU_STATUS_PENGIRIMAN_LAPORAN
+  rKepsek?: boolean;            // KEPSEK_STATUS_PENGIRIMAN_LAPORAN
+  rOrtu?: boolean;              // STATUS_PENGIRIMAN_LAPORAN_ORTU (CP)
+
+  // ── Milestones: Distribusi / Paparan ────────────────────────────────────────
+  deadlinePaparanKepsek?: string;   // DEADLINE PAPARAN_KEPSEK — ISO date
+  statusPaparanKepsek?: boolean;    // STATUS_PAPARAN_KEPSEK
+  deadlinePaparanWalas?: string;    // DEADLINE PAPARAN_WALAS — ISO date
+  statusPaparanWalas?: boolean;     // STATUS_PAPARAN_WALAS
+  deadlinePaparanOrtu?: string;     // DEADLINE PAPARAN_ORTU — ISO date
+  statusPaparanOrtu?: boolean;      // STATUS_PAPARAN_ORTU
+
+  // ── Status & Testimoni ───────────────────────────────────────────────────────
+  statusCatatan?: string;           // KETERANGAN
+  polling: boolean;
+  detailTestimoni?: string;         // TESTIMONI
+
+  // ── Computed ─────────────────────────────────────────────────────────────────
   deliveryStage: DeliveryStage;
-  hariTersisa: number;
-  progressPct: number;
   trafficLight: TrafficLight;
-  bottleneckFlag: boolean;
-  bottleneckDesc?: string;
-  csatScore?: number;
+  progressPct: number;
+  daysUntilBatasInput?: number;
+  isComplete: boolean;
 }
 
-export type BottleneckType =
-  | "ENUMERATOR"
-  | "LAPORAN"
-  | "PAPARAN"
-  | "PEMBAYARAN"
-  | "KOORDINASI_SEKOLAH"
-  | "LAINNYA";
-
-export interface IBottleneckLog {
-  logId: string;
-  deliveryId: string;
-  schoolName: string;
-  produk: ProductKind;
-  bottleneckType: BottleneckType;
-  bottleneckDesc: string;
-  flaggedAt: string;
-  resolvedAt?: string;
-  durationDays: number;
-  resolvedBy?: string;
-  resolutionNotes?: string;
+/** Full ops API response */
+export interface IOpsData {
+  totalActive: number;          // sekolah belum selesai
+  merahCount: number;
+  kuningCount: number;
+  hijauCount: number;
+  selesaiCount: number;
+  hasSiswaData?: boolean;       // true jika ada data jumlahSiswa di spreadsheet
+  deliveries: ISchoolDelivery[];
 }
 
 // ============================================================================
-// Product Domain (fammi_product)
+// Product Domain
 // ============================================================================
 export type DevState =
-  | "BACKLOG"
-  | "GROOMING"
-  | "DESIGN"
-  | "DEV"
-  | "UAT"
-  | "RELEASED"
-  | "ON_HOLD"
-  | "DEPRECATED";
+  | "BACKLOG" | "GROOMING" | "DESIGN" | "DEV"
+  | "UAT" | "RELEASED" | "ON_HOLD" | "DEPRECATED";
 
 export type PriorityLabel =
-  | "MUST_HAVE"
-  | "SHOULD_HAVE"
-  | "NICE_TO_HAVE"
-  | "FUTURE";
+  | "MUST_HAVE" | "SHOULD_HAVE" | "NICE_TO_HAVE" | "FUTURE";
 
 export interface IFeature {
   featureId: string;
@@ -137,17 +205,11 @@ export interface ICsatEntry {
 }
 
 // ============================================================================
-// Growth Domain (fammi_growth)
+// Growth Domain
 // ============================================================================
 export type SalesStage =
-  | "COLD"
-  | "CONTACTED"
-  | "INTERESTED"
-  | "DEMO"
-  | "PROPOSAL"
-  | "NEGOTIATION"
-  | "CLOSED_WON"
-  | "CLOSED_LOST";
+  | "COLD" | "CONTACTED" | "INTERESTED" | "DEMO"
+  | "PROPOSAL" | "NEGOTIATION" | "CLOSED_WON" | "CLOSED_LOST";
 
 export interface ISalesLead {
   leadId: string;
@@ -161,12 +223,8 @@ export interface ISalesLead {
 }
 
 export type PartnerStep =
-  | "IDENTIFIED"
-  | "OUTREACH"
-  | "DISCUSSION"
-  | "MOU_PKS"
-  | "ACTIVE"
-  | "EVALUASI";
+  | "IDENTIFIED" | "OUTREACH" | "DISCUSSION"
+  | "MOU_PKS" | "ACTIVE" | "EVALUASI";
 
 export type PartnershipHealth = "HEALTHY" | "AT_RISK" | "STALLED";
 
@@ -181,16 +239,8 @@ export interface IPartnership {
 }
 
 export type MarketingChannel =
-  | "INSTAGRAM"
-  | "TIKTOK"
-  | "LINKEDIN"
-  | "EMAIL"
-  | "WA_BLAST"
-  | "WEBINAR"
-  | "EVENT_OFFLINE"
-  | "COLD_CALL"
-  | "BLOG"
-  | "PODCAST";
+  | "INSTAGRAM" | "TIKTOK" | "LINKEDIN" | "EMAIL" | "WA_BLAST"
+  | "WEBINAR" | "EVENT_OFFLINE" | "COLD_CALL" | "BLOG" | "PODCAST";
 
 export interface IMarketingOutreach {
   outreachId: string;
@@ -204,7 +254,7 @@ export interface IMarketingOutreach {
 }
 
 // ============================================================================
-// Team Wellbeing Domain (fammi_team)
+// Team Wellbeing Domain
 // ============================================================================
 export interface ITeamCheckin {
   sprintId: string;
@@ -220,7 +270,7 @@ export interface ITeamCheckin {
 export type BurnoutLevel = "LOW" | "MEDIUM" | "HIGH";
 
 // ============================================================================
-// Impact Domain (aggregated / cross-sheet)
+// Impact Domain
 // ============================================================================
 export interface ISocialImpact {
   schoolsActive: number;
@@ -233,14 +283,9 @@ export interface ISocialImpact {
 }
 
 // ============================================================================
-// Timeline Domain (fammi_timelines)
+// Timeline Domain
 // ============================================================================
-export type ItemStatus =
-  | "ON_TRACK"
-  | "AT_RISK"
-  | "OVERDUE"
-  | "DONE"
-  | "BLOCKED";
+export type ItemStatus = "ON_TRACK" | "AT_RISK" | "OVERDUE" | "DONE" | "BLOCKED";
 
 export interface ITimelineItem {
   itemId: string;
