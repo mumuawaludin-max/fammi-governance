@@ -139,6 +139,14 @@ export interface ISchoolDelivery {
   rKepsek?: boolean;            // KEPSEK_STATUS_PENGIRIMAN_LAPORAN
   rOrtu?: boolean;              // STATUS_PENGIRIMAN_LAPORAN_ORTU (CP)
 
+  // ── Pengiriman: jumlah target vs terkirim ────────────────────────────────────
+  targetWalasRapor?: number;    // TARGET_WALAS_RAPOR
+  raporWalasDikirim?: number;   // RAPOR_WALAS_DIKIRIM
+  targetIndividuRapor?: number; // TARGET_INDIVIDU_RAPOR
+  raporIndividuDikirim?: number; // RAPOR_INDIVIDU_DIKIRIM
+  targetKepsekRapor?: number;   // TARGET_KEPSEK_RAPOR
+  raporKepsekDikirim?: number;  // RAPOR_KEPSEK_DIKIRIM
+
   // ── Milestones: Distribusi / Paparan ────────────────────────────────────────
   deadlinePaparanKepsek?: string;   // DEADLINE PAPARAN_KEPSEK — ISO date
   statusPaparanKepsek?: boolean;    // STATUS_PAPARAN_KEPSEK

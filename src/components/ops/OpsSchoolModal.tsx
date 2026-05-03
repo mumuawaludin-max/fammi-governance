@@ -124,63 +124,118 @@ function MilestoneGroup({ title, items }: { title: string; items: { done: boolea
 }
 
 function DeliveryComparison({ d }: { d: ISchoolDelivery }) {
-  // Only meaningful when there are deliver dates
   const hasAny = d.deliverWalas || d.deliverIndividu || d.deliverKepsek || d.deliverOrtu;
-  if (!hasAny) return null;
+  const hasTargetData =
+    d.targetWalasRapor !== undefined ||
+    d.targetIndividuRapor !== undefined ||
+    d.targetKepsekRapor !== undefined;
+  if (!hasAny && !hasTargetData) return null;
 
-  type Row = { label: string; date?: string; checked: boolean };
+  type Row = {
+    label: string;
+    date?: string;
+    checked: boolean;
+    target?: number;
+    dikirim?: number;
+  };
   const rows: Row[] = [];
 
   if (d.produk === "RK" || d.produk === "SP") {
-    rows.push({ label: "Kirim ke wali kelas", date: d.deliverWalas,    checked: d.rWalas    ?? false });
-    rows.push({ label: "Kirim ke siswa",      date: d.deliverIndividu, checked: d.rIndividu ?? false });
-    rows.push({ label: "Kirim ke kepsek",     date: d.deliverKepsek,   checked: d.rKepsek   ?? false });
+    rows.push({ label: "Wali kelas",  date: d.deliverWalas,    checked: d.rWalas    ?? false, target: d.targetWalasRapor,    dikirim: d.raporWalasDikirim });
+    rows.push({ label: "Siswa",       date: d.deliverIndividu, checked: d.rIndividu ?? false, target: d.targetIndividuRapor, dikirim: d.raporIndividuDikirim });
+    rows.push({ label: "Kepsek",      date: d.deliverKepsek,   checked: d.rKepsek   ?? false, target: d.targetKepsekRapor,   dikirim: d.raporKepsekDikirim });
   } else {
-    rows.push({ label: "Kirim ke orang tua",  date: d.deliverOrtu,     checked: d.rOrtu     ?? false });
+    rows.push({ label: "Orang tua",   date: d.deliverOrtu,     checked: d.rOrtu     ?? false });
   }
+
+  const totalSisa = rows.reduce((acc, r) => {
+    if (r.target === undefined) return acc;
+    return acc + Math.max(0, r.target - (r.dikirim ?? 0));
+  }, 0);
+  const hasAnyTarget = rows.some((r) => r.target !== undefined);
 
   return (
     <div>
-      <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">
-        Pengiriman Rapor
-      </p>
-      <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide">
+          Pengiriman Rapor
+        </p>
+        {hasAnyTarget && (
+          <span className={cn(
+            "text-[10px] font-bold px-2 py-0.5 rounded-full",
+            totalSisa === 0 ? "bg-success/10 text-success" : "bg-danger/10 text-danger",
+          )}>
+            {totalSisa === 0 ? "Semua terkirim" : `Sisa ${totalSisa} laporan`}
+          </span>
+        )}
+      </div>
+      <div className="flex flex-col gap-3">
         {rows.map((row, i) => {
           const dayDiff = daysFrom(row.date);
           const isPast  = dayDiff !== undefined && dayDiff < 0;
+          const sisa    = row.target !== undefined ? Math.max(0, row.target - (row.dikirim ?? 0)) : undefined;
           const status  = row.checked
             ? "sudah"
             : isPast ? "terlambat" : row.date ? "terjadwal" : "belum";
+          const pct     = row.target ? Math.min(100, ((row.dikirim ?? 0) / row.target) * 100) : 0;
 
           return (
-            <div key={i} className="flex items-center justify-between gap-3 py-2 border-b border-fammi-100 last:border-0">
-              <div className="flex items-center gap-2">
-                {row.checked
-                  ? <CheckCircle2 size={14} className="text-success shrink-0" />
-                  : isPast
-                    ? <AlertTriangle size={14} className="text-danger shrink-0" />
-                    : <Circle size={14} className="text-fammi-200 shrink-0" />}
-                <span className="text-sm text-text-primary">{row.label}</span>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                {row.date && (
-                  <span className="text-xs text-text-secondary flex items-center gap-1">
-                    <Calendar size={11} />
-                    {fmtDate(row.date)}
+            <div key={i} className="flex flex-col gap-1.5 py-2 border-b border-fammi-100 last:border-0">
+              {/* Top row: label + date + status badge */}
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  {row.checked
+                    ? <CheckCircle2 size={14} className="text-success shrink-0" />
+                    : isPast
+                      ? <AlertTriangle size={14} className="text-danger shrink-0" />
+                      : <Circle size={14} className="text-fammi-200 shrink-0" />}
+                  <span className="text-sm font-medium text-text-primary">{row.label}</span>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {row.date && (
+                    <span className="text-xs text-text-secondary flex items-center gap-1">
+                      <Calendar size={11} />
+                      {fmtDate(row.date)}
+                    </span>
+                  )}
+                  <span className={cn(
+                    "text-[10px] font-semibold px-2 py-0.5 rounded-full",
+                    status === "sudah"     ? "bg-success/10 text-success"   :
+                    status === "terlambat" ? "bg-danger/10 text-danger"     :
+                    status === "terjadwal" ? "bg-fammi-100 text-fammi"      :
+                                            "bg-fammi-50 text-text-secondary",
+                  )}>
+                    {status === "sudah"     ? "Sudah"     :
+                     status === "terlambat" ? "Terlambat" :
+                     status === "terjadwal" ? "Terjadwal" : "Belum"}
                   </span>
-                )}
-                <span className={cn(
-                  "text-[10px] font-semibold px-2 py-0.5 rounded-full",
-                  status === "sudah"     ? "bg-success/10 text-success"   :
-                  status === "terlambat" ? "bg-danger/10 text-danger"     :
-                  status === "terjadwal" ? "bg-fammi-100 text-fammi"      :
-                                          "bg-fammi-50 text-text-secondary",
-                )}>
-                  {status === "sudah"     ? "Sudah dikirim"   :
-                   status === "terlambat" ? "Terlambat"       :
-                   status === "terjadwal" ? "Terjadwal"       : "Belum dijadwalkan"}
-                </span>
+                </div>
               </div>
+
+              {/* Progress bar: target vs dikirim */}
+              {row.target !== undefined && (
+                <div className="pl-6">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] text-text-secondary">
+                      {row.dikirim ?? 0} dari {row.target} terkirim
+                    </span>
+                    {sisa !== undefined && sisa > 0 ? (
+                      <span className="text-[10px] font-bold text-danger">Sisa {sisa}</span>
+                    ) : (
+                      <span className="text-[10px] font-bold text-success">Lunas</span>
+                    )}
+                  </div>
+                  <div className="h-1.5 w-full rounded-full bg-fammi-100 overflow-hidden">
+                    <div
+                      className={cn(
+                        "h-full rounded-full transition-all duration-500",
+                        sisa === 0 ? "bg-success" : "bg-fammi",
+                      )}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           );
         })}

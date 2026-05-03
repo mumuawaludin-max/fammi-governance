@@ -26,6 +26,12 @@ function toOptStr(val: string): string | undefined {
   return val || undefined;
 }
 
+function toOptNum(val: string): number | undefined {
+  if (!val) return undefined;
+  const n = parseInt(val, 10);
+  return isNaN(n) ? undefined : n;
+}
+
 function tl(days: number | undefined, complete: boolean, selesaiInput?: boolean): TrafficLight {
   if (complete) return "HIJAU";
   if (selesaiInput) return "HIJAU";  // input sudah selesai → tidak terlambat
@@ -88,6 +94,13 @@ export function parseOpsRow(row: Record<string, string>, produk: ProductKind, no
     rIndividu: toOptBool(pick(row, "rIndividu", "Individu Status Pengiriman")),
     rKepsek:   toOptBool(pick(row, "rKepsek",   "Kepsek Status Pengiriman")),
     rOrtu:     toOptBool(pick(row, "rOrtu",     "R Ortu")),
+
+    targetWalasRapor:    toOptNum(pick(row, "targetWalasRapor",    "TARGET_WALAS_RAPOR")),
+    raporWalasDikirim:   toOptNum(pick(row, "raporWalasDikirim",   "RAPOR_WALAS_DIKIRIM")),
+    targetIndividuRapor: toOptNum(pick(row, "targetIndividuRapor", "TARGET_INDIVIDU_RAPOR")),
+    raporIndividuDikirim: toOptNum(pick(row, "raporIndividuDikirim", "RAPOR_INDIVIDU_DIKIRIM")),
+    targetKepsekRapor:   toOptNum(pick(row, "targetKepsekRapor",   "TARGET_KEPSEK_RAPOR")),
+    raporKepsekDikirim:  toOptNum(pick(row, "raporKepsekDikirim",  "RAPOR_KEPSEK_DIKIRIM")),
 
     deadlinePaparanKepsek: toOptStr(pick(row, "deadlinePaparanKepsek")),
     statusPaparanKepsek:   toOptBool(pick(row, "statusPaparanKepsek")),

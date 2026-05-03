@@ -55,6 +55,58 @@ function fmtDate(iso: string | undefined): string {
   return d.toLocaleDateString("id-ID", { day: "numeric", month: "short" });
 }
 
+function SisaKirimCell({ d }: { d: ISchoolDelivery }) {
+  const hasTarget =
+    d.targetWalasRapor !== undefined ||
+    d.targetIndividuRapor !== undefined ||
+    d.targetKepsekRapor !== undefined;
+
+  if (!hasTarget) {
+    const date = d.deliverWalas ?? d.deliverOrtu ?? d.deliverIndividu;
+    return <span className="font-mono text-xs text-text-secondary whitespace-nowrap">{fmtDate(date)}</span>;
+  }
+
+  const items: { key: string; target: number; dikirim: number }[] = [];
+  if (d.produk === "RK" || d.produk === "SP") {
+    if (d.targetWalasRapor !== undefined)
+      items.push({ key: "Walas", target: d.targetWalasRapor, dikirim: d.raporWalasDikirim ?? 0 });
+    if (d.targetIndividuRapor !== undefined)
+      items.push({ key: "Individu", target: d.targetIndividuRapor, dikirim: d.raporIndividuDikirim ?? 0 });
+    if (d.targetKepsekRapor !== undefined)
+      items.push({ key: "Kepsek", target: d.targetKepsekRapor, dikirim: d.raporKepsekDikirim ?? 0 });
+  }
+
+  if (items.length === 0) {
+    const date = d.deliverOrtu;
+    return <span className="font-mono text-xs text-text-secondary whitespace-nowrap">{fmtDate(date)}</span>;
+  }
+
+  return (
+    <div className="flex flex-col gap-0.5">
+      {items.map(({ key, target, dikirim }) => {
+        const sisa = Math.max(0, target - dikirim);
+        const done = sisa === 0;
+        return (
+          <div key={key} className="flex items-center gap-1.5">
+            <span className="text-[9px] font-semibold text-text-secondary/40 w-10 shrink-0">{key}</span>
+            <span className={cn(
+              "font-mono text-[10px] font-bold",
+              done ? "text-success" : "text-text-primary",
+            )}>
+              {dikirim}/{target}
+            </span>
+            {!done && (
+              <span className="text-[9px] font-bold px-1 py-0.5 rounded-full bg-danger/10 text-danger">
+                -{sisa}
+              </span>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 type SortKey = "no" | "schoolName" | "progressPct" | "days" | "batasInput";
 type SortDir = "asc" | "desc";
 
@@ -127,7 +179,7 @@ export function OpsSchoolTable({ deliveries, onSchoolClick }: OpsSchoolTableProp
             <th className="px-3 py-3 text-left text-[11px] font-semibold text-text-secondary uppercase tracking-wide whitespace-nowrap">Tahap</th>
             <SortTh label="Progress"    sortKey="progressPct" active={sortKey === "progressPct"} dir={sortDir} onSort={handleSort} />
             <SortTh label="Batas Input" sortKey="batasInput"  active={sortKey === "batasInput"}  dir={sortDir} onSort={handleSort} />
-            <th className="px-3 py-3 text-left text-[11px] font-semibold text-text-secondary uppercase tracking-wide whitespace-nowrap">Deliver</th>
+            <th className="px-3 py-3 text-left text-[11px] font-semibold text-text-secondary uppercase tracking-wide whitespace-nowrap">Sisa Kirim</th>
             <SortTh label="Sisa"        sortKey="days"        active={sortKey === "days"}        dir={sortDir} onSort={handleSort} />
             <th className="px-3 py-3 text-left text-[11px] font-semibold text-text-secondary uppercase tracking-wide whitespace-nowrap">Kelas / Siswa</th>
             <th className="px-3 py-3 text-left text-[11px] font-semibold text-text-secondary uppercase tracking-wide">Catatan</th>
@@ -140,7 +192,6 @@ export function OpsSchoolTable({ deliveries, onSchoolClick }: OpsSchoolTableProp
             const overdue  = next && next.days < 0;
             const critical = next && next.days >= 0 && next.days <= 3;
             const warning  = next && next.days > 3  && next.days <= 7;
-            const deliverDate = d.deliverWalas ?? d.deliverOrtu ?? d.deliverIndividu;
 
             return (
               <tr
@@ -200,9 +251,9 @@ export function OpsSchoolTable({ deliveries, onSchoolClick }: OpsSchoolTableProp
                   {fmtDate(d.batasInput)}
                 </td>
 
-                {/* Deliver */}
-                <td className="px-3 py-3 font-mono text-xs text-text-secondary whitespace-nowrap">
-                  {fmtDate(deliverDate)}
+                {/* Sisa Kirim */}
+                <td className="px-3 py-3">
+                  <SisaKirimCell d={d} />
                 </td>
 
                 {/* Sisa */}
