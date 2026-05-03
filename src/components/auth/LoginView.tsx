@@ -70,7 +70,7 @@ export function LoginView() {
             <p className="font-bold text-xl text-text-primary tracking-tight">
               Fammi
             </p>
-            <p className="text-xs text-text-secondary mt-0.5">Fammi Governance</p>
+            <p className="text-xs text-text-secondary mt-0.5">Fammi Performance</p>
           </div>
         </div>
 

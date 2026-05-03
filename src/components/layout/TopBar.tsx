@@ -19,7 +19,7 @@ function getPageTitle(pathname: string): string {
   return (
     Object.entries(PAGE_TITLES).find(([route]) =>
       route === "/" ? pathname === "/" : pathname.startsWith(route),
-    )?.[1] ?? "Fammi Governance"
+    )?.[1] ?? "Fammi Performance"
   );
 }
 
@@ -44,7 +44,7 @@ export function TopBar({ onMenuClick, lastUpdated, onRefresh }: TopBarProps) {
         <Menu size={18} />
       </button>
       <div className="hidden md:flex items-center gap-2 text-xs text-text-secondary">
-        <span className="text-fammi font-semibold">Fammi Governance</span>
+        <span className="text-fammi font-semibold">Fammi Performance</span>
         <span>/</span>
         <span className="text-text-primary font-medium">{title}</span>
       </div>

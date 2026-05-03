@@ -1,5 +1,5 @@
 // ============================================================================
-// Fammi Governance OS — Google Apps Script Web App
+// Fammi Performance OS — Google Apps Script Web App
 // Upload file ini ke Google Apps Script, deploy sebagai Web App
 // ============================================================================
 

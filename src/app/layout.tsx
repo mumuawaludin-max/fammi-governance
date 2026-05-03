@@ -18,7 +18,7 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Fammi Governance",
+  title: "Fammi Performance",
   description:
     "Mission control operasional Fammi — social enterprise edu-health yang mengantarkan 55 sekolah menuju target 4.000.",
   icons: {

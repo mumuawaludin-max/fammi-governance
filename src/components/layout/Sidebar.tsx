@@ -75,7 +75,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             <span className="text-sm font-bold tracking-tight text-text-primary">
               Fammi
             </span>
-            <span className="text-[10px] text-text-secondary">Fammi Governance</span>
+            <span className="text-[10px] text-text-secondary">Fammi Performance</span>
           </div>
         </Link>
         <button
