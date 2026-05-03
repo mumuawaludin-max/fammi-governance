@@ -423,6 +423,14 @@ function buildColMap(allRows) {
     rKepsek:   find("kepsekstatuspengirimanlaporan",   "rkepsek"),
     rOrtu:     find("statuspengirimanlaporanortu",     "rortu"),
 
+    // Pengiriman — jumlah target vs terkirim
+    targetWalasRapor:    find("targetwalasrapor"),
+    raporWalasDikirim:   find("raporwalasdikirim"),
+    targetIndividuRapor: find("targetindividurapor"),
+    raporIndividuDikirim: find("raporindividudikirim"),
+    targetKepsekRapor:   find("targetkepsekrapor"),
+    raporKepsekDikirim:  find("raporkepsekdikirim"),
+
     // Distribusi / Paparan
     deadlinePaparanKepsek: find("deadlinepaparankepsek"),
     statusPaparanKepsek:   find("statuspaparankepsek"),
@@ -464,6 +472,7 @@ function readSheet(ss, sheetName, produk) {
   function getD(row, ci) { var s = ci >= 0 ? toDateStr(row[ci]) : ""; return s || undefined; }
   function getS(row, ci) { return ci >= 0 ? (String(row[ci] || "").trim() || undefined) : undefined; }
   function getSe(row, ci) { return ci >= 0 ? String(row[ci] || "").trim() : undefined; }
+  function getN(row, ci) { if (ci < 0) return undefined; var n = parseInt(row[ci]); return isNaN(n) ? undefined : n; }
 
   var results = [];
   for (var r = 1; r < allRows.length; r++) {
@@ -524,6 +533,14 @@ function readSheet(ss, sheetName, produk) {
       rIndividu: getOB(row, C.rIndividu),
       rKepsek:   getOB(row, C.rKepsek),
       rOrtu:     getOB(row, C.rOrtu),
+
+      // Pengiriman — jumlah target vs terkirim
+      targetWalasRapor:    getN(row, C.targetWalasRapor),
+      raporWalasDikirim:   getN(row, C.raporWalasDikirim),
+      targetIndividuRapor: getN(row, C.targetIndividuRapor),
+      raporIndividuDikirim: getN(row, C.raporIndividuDikirim),
+      targetKepsekRapor:   getN(row, C.targetKepsekRapor),
+      raporKepsekDikirim:  getN(row, C.raporKepsekDikirim),
 
       // Distribusi / Paparan
       deadlinePaparanKepsek: getD(row, C.deadlinePaparanKepsek),
