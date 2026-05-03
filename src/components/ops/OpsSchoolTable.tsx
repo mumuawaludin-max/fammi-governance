@@ -56,17 +56,8 @@ function fmtDate(iso: string | undefined): string {
 }
 
 function SisaKirimCell({ d }: { d: ISchoolDelivery }) {
-  const hasTarget =
-    d.targetWalasRapor !== undefined ||
-    d.targetIndividuRapor !== undefined ||
-    d.targetKepsekRapor !== undefined;
-
-  if (!hasTarget) {
-    const date = d.deliverWalas ?? d.deliverOrtu ?? d.deliverIndividu;
-    return <span className="font-mono text-xs text-text-secondary whitespace-nowrap">{fmtDate(date)}</span>;
-  }
-
   const items: { key: string; target: number; dikirim: number }[] = [];
+
   if (d.produk === "RK" || d.produk === "SP") {
     if (d.targetWalasRapor !== undefined)
       items.push({ key: "Walas", target: d.targetWalasRapor, dikirim: d.raporWalasDikirim ?? 0 });
@@ -77,12 +68,11 @@ function SisaKirimCell({ d }: { d: ISchoolDelivery }) {
   }
 
   if (items.length === 0) {
-    const date = d.deliverOrtu;
-    return <span className="font-mono text-xs text-text-secondary whitespace-nowrap">{fmtDate(date)}</span>;
+    return <span className="text-[10px] text-text-secondary/30">—</span>;
   }
 
   return (
-    <div className="flex flex-col gap-0.5">
+    <div className="flex flex-col gap-1">
       {items.map(({ key, target, dikirim }) => {
         const sisa = Math.max(0, target - dikirim);
         const done = sisa === 0;
@@ -96,8 +86,13 @@ function SisaKirimCell({ d }: { d: ISchoolDelivery }) {
               {dikirim}/{target}
             </span>
             {!done && (
-              <span className="text-[9px] font-bold px-1 py-0.5 rounded-full bg-danger/10 text-danger">
-                -{sisa}
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-danger/10 text-danger">
+                sisa {sisa}
+              </span>
+            )}
+            {done && (
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-success/10 text-success">
+                lunas
               </span>
             )}
           </div>
@@ -170,7 +165,7 @@ export function OpsSchoolTable({ deliveries, onSchoolClick }: OpsSchoolTableProp
 
   return (
     <div className="w-full overflow-x-auto rounded-[24px] border border-fammi-100 bg-white">
-      <table className="w-full min-w-[960px] border-collapse text-sm">
+      <table className="w-full min-w-[1100px] border-collapse text-sm">
         <thead>
           <tr className="border-b border-fammi-100 bg-fammi-50/60">
             <th className="w-10 pl-5 pr-2 py-3 text-left text-[11px] font-semibold text-text-secondary uppercase tracking-wide">#</th>
@@ -179,6 +174,7 @@ export function OpsSchoolTable({ deliveries, onSchoolClick }: OpsSchoolTableProp
             <th className="px-3 py-3 text-left text-[11px] font-semibold text-text-secondary uppercase tracking-wide whitespace-nowrap">Tahap</th>
             <SortTh label="Progress"    sortKey="progressPct" active={sortKey === "progressPct"} dir={sortDir} onSort={handleSort} />
             <SortTh label="Batas Input" sortKey="batasInput"  active={sortKey === "batasInput"}  dir={sortDir} onSort={handleSort} />
+            <th className="px-3 py-3 text-left text-[11px] font-semibold text-text-secondary uppercase tracking-wide whitespace-nowrap">Deliver</th>
             <th className="px-3 py-3 text-left text-[11px] font-semibold text-text-secondary uppercase tracking-wide whitespace-nowrap">Sisa Kirim</th>
             <SortTh label="Sisa"        sortKey="days"        active={sortKey === "days"}        dir={sortDir} onSort={handleSort} />
             <th className="px-3 py-3 text-left text-[11px] font-semibold text-text-secondary uppercase tracking-wide whitespace-nowrap">Kelas / Siswa</th>
@@ -192,6 +188,7 @@ export function OpsSchoolTable({ deliveries, onSchoolClick }: OpsSchoolTableProp
             const overdue  = next && next.days < 0;
             const critical = next && next.days >= 0 && next.days <= 3;
             const warning  = next && next.days > 3  && next.days <= 7;
+            const deliverDate = d.deliverWalas ?? d.deliverOrtu ?? d.deliverIndividu;
 
             return (
               <tr
@@ -249,6 +246,11 @@ export function OpsSchoolTable({ deliveries, onSchoolClick }: OpsSchoolTableProp
                 {/* Batas Input */}
                 <td className="px-3 py-3 font-mono text-xs text-text-secondary whitespace-nowrap">
                   {fmtDate(d.batasInput)}
+                </td>
+
+                {/* Deliver */}
+                <td className="px-3 py-3 font-mono text-xs text-text-secondary whitespace-nowrap">
+                  {fmtDate(deliverDate)}
                 </td>
 
                 {/* Sisa Kirim */}
