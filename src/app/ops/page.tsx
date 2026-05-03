@@ -7,7 +7,7 @@ import { useOpsData } from "@/hooks/use-ops";
 import { OpsStats, type StatsFilter } from "@/components/ops/OpsStats";
 import { OpsPipeline } from "@/components/ops/OpsPipeline";
 import { OpsFilters, type TrafficFilter, type ProdukFilter } from "@/components/ops/OpsFilters";
-import { OpsSchoolCard } from "@/components/ops/OpsSchoolCard";
+import { OpsSchoolTable } from "@/components/ops/OpsSchoolTable";
 import { OpsCalendar } from "@/components/ops/OpsCalendar";
 import { OpsUrgencySection } from "@/components/ops/OpsUrgencySection";
 import { OpsSchoolModal } from "@/components/ops/OpsSchoolModal";
@@ -284,7 +284,7 @@ export default function OpsPage() {
               )}
             </motion.div>
 
-            {/* Cards */}
+            {/* Table */}
             {filteredList.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 text-center">
                 <p className="text-4xl mb-3">🎉</p>
@@ -293,22 +293,14 @@ export default function OpsPage() {
               </div>
             ) : (
               <motion.div
-                className="grid grid-cols-1 md:grid-cols-2 gap-4"
-                initial="hidden"
-                animate="visible"
-                variants={{ visible: { transition: { staggerChildren: 0.04 } } }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
               >
-                {filteredList.map((d) => (
-                  <motion.div
-                    key={`${d.produk}-${d.no}`}
-                    variants={{
-                      hidden: { opacity: 0, y: 10 },
-                      visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-                    }}
-                  >
-                    <OpsSchoolCard delivery={d} onClick={setSelectedSchool} />
-                  </motion.div>
-                ))}
+                <OpsSchoolTable
+                  deliveries={filteredList}
+                  onSchoolClick={setSelectedSchool}
+                />
               </motion.div>
             )}
           </>
