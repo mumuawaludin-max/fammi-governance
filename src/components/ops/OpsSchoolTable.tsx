@@ -71,30 +71,20 @@ function SisaKirimCell({ d }: { d: ISchoolDelivery }) {
     return <span className="text-[10px] text-text-secondary/30">—</span>;
   }
 
+  const allDone = items.every(({ target, dikirim }) => dikirim >= target);
+  if (allDone) {
+    return <span className="text-[10px] font-semibold text-success">Lunas</span>;
+  }
+
   return (
     <div className="flex flex-col gap-1">
       {items.map(({ key, target, dikirim }) => {
         const sisa = Math.max(0, target - dikirim);
-        const done = sisa === 0;
+        if (sisa === 0) return null;
         return (
-          <div key={key} className="flex items-center gap-1.5">
-            <span className="text-[9px] font-semibold text-text-secondary/40 w-10 shrink-0">{key}</span>
-            <span className={cn(
-              "font-mono text-[10px] font-bold",
-              done ? "text-success" : "text-text-primary",
-            )}>
-              {dikirim}/{target}
-            </span>
-            {!done && (
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-danger/10 text-danger">
-                sisa {sisa}
-              </span>
-            )}
-            {done && (
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-success/10 text-success">
-                lunas
-              </span>
-            )}
+          <div key={key} className="flex items-center gap-1.5 whitespace-nowrap">
+            <span className="text-[10px] text-text-secondary w-12 shrink-0">{key}</span>
+            <span className="text-[10px] font-bold text-danger">{sisa}x lagi</span>
           </div>
         );
       })}
