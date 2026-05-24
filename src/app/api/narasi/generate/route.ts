@@ -68,6 +68,7 @@ LARANGAN FRASA (DILARANG KERAS — akan menyebabkan output ditolak):
 - JANGAN tulis "penguasaan nyaris sempurna" → gunakan "capaian indikator yang sangat baik"
 - JANGAN tulis "menguasai X indikator secara solid" → gunakan "mencapai X indikator"
 - JANGAN awali kalimat dengan kata "Bagus"
+- JANGAN gunakan karakter em-dash (—) di dalam teks narasi. Jika ingin memisahkan klausa, gunakan koma atau buat kalimat baru.
 
 Placeholder seperti {NK1}, {nama_panggilan}, {total_indikator} JANGAN diubah.`;
 }
@@ -232,6 +233,34 @@ ATURAN narasiHasilDariOrangtua (SEMUA rentang termasuk 0%):
 Gunakan tool set_narasi_keselarasan.`;
 }
 
+// ── Sanitasi em-dash dari semua string dalam rows ─────────────
+// Jaring pengaman: jika Claude tetap menyelipkan em-dash (—) meski sudah dilarang,
+// hapus otomatis sebelum data dikirim ke frontend/Excel.
+// Pengecualian: nilai literal "—" (satu karakter, field narasiHasilDariSekolah pada
+// rentang 0%) dibiarkan karena itu bukan teks narasi melainkan penanda kosong.
+function stripEmDash(value: string): string {
+  // Ganti em-dash yang diapit spasi → koma+spasi (misal: "A — B" → "A, B")
+  // Ganti em-dash tanpa spasi → hapus saja
+  return value
+    .replace(/ — /g, ", ")
+    .replace(/—/g, "");
+}
+
+function sanitizeRows(rows: unknown[]): unknown[] {
+  return rows.map((row) => {
+    if (row === null || typeof row !== "object") return row;
+    const sanitized: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(row as Record<string, unknown>)) {
+      if (typeof v === "string" && v !== "—") {
+        sanitized[k] = stripEmDash(v);
+      } else {
+        sanitized[k] = v;
+      }
+    }
+    return sanitized;
+  });
+}
+
 // ── Panggil Claude dengan tool_use ────────────────────────────
 
 async function callWithTool<T extends { rows: unknown[] }>(
@@ -270,7 +299,7 @@ async function callWithTool<T extends { rows: unknown[] }>(
     rows = (firstArr as unknown[] | undefined) ?? [];
   }
 
-  return { rows } as T;
+  return { rows: sanitizeRows(rows) } as T;
 }
 
 // ── Main handler ──────────────────────────────────────────────

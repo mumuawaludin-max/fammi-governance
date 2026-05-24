@@ -147,7 +147,24 @@ LARANGAN GLOBAL (berlaku untuk semua narasi):
 - JANGAN campur kata ganti orang pertama "aku" dan "saya" dalam satu kalimat atau satu narasi — pilih satu dan konsisten.
 - JANGAN tulis contoh kalimat anak yang ambigu secara sosial atau mengandung konteks sensitif jenis kelamin.
 - JANGAN tulis "pemahaman yang solid" → gunakan "pemahaman yang baik" atau "pemahaman yang berkembang".
-- JANGAN tulis "menghadapi X indikator" atau "indikator yang kaya" → framing harus positif dan ringan.`;
+- JANGAN tulis "menghadapi X indikator" atau "indikator yang kaya" → framing harus positif dan ringan.
+- JANGAN gunakan karakter em-dash (—) di dalam teks narasi. Jika ingin memisahkan klausa, gunakan koma atau buat kalimat baru.`;
+}
+
+// ── Sanitasi em-dash dari semua string dalam rows ─────────────
+function stripEmDash(value: string): string {
+  return value.replace(/ — /g, ", ").replace(/—/g, "");
+}
+
+function sanitizeRows(rows: unknown[]): unknown[] {
+  return rows.map((row) => {
+    if (row === null || typeof row !== "object") return row;
+    const sanitized: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(row as Record<string, unknown>)) {
+      sanitized[k] = typeof v === "string" ? stripEmDash(v) : v;
+    }
+    return sanitized;
+  });
 }
 
 // ── Claude API call dengan tool use ──────────────────────────
@@ -196,6 +213,7 @@ async function callWithTool<T extends { rows: unknown[] }>(
     rows = (firstArr as unknown[] | undefined) ?? [];
   }
 
+  rows = sanitizeRows(rows);
   console.error(`[${tool.name}] extracted rows=${rows.length}`);
   if (rows.length > 0) {
     console.error(`[${tool.name}] first row keys:`, Object.keys(rows[0] as object));
