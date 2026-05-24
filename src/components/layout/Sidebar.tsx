@@ -13,11 +13,20 @@ import {
   Globe,
   X,
   LogOut,
+  ChevronRight,
+  Truck,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ROUTES } from "@/lib/constants";
 import { useAppStore } from "@/stores/app-store";
 import type { MenuKey } from "@/types";
+
+// Sub-menu items per parent route
+const OPS_SUB_ITEMS: { href: string; label: string; Icon: React.ElementType; exact?: boolean }[] = [
+  { href: ROUTES.OPS, label: "Pengiriman Rapor Sekolah", Icon: Truck, exact: true },
+  { href: ROUTES.OPS_NARASI_GENERATOR, label: "Narasi Generator", Icon: Sparkles },
+];
 
 // permKey harus match MenuKey → IUserPermissions keys
 const NAV_ITEMS: {
@@ -25,9 +34,10 @@ const NAV_ITEMS: {
   label: string;
   Icon: React.ElementType;
   permKey: MenuKey;
+  subItems?: { href: string; label: string; Icon: React.ElementType; exact?: boolean }[];
 }[] = [
   { href: ROUTES.HOME,    label: "Mission Control", Icon: LayoutDashboard, permKey: "missionControl" },
-  { href: ROUTES.OPS,     label: "Operasional",     Icon: Building2,       permKey: "operasional"    },
+  { href: ROUTES.OPS,     label: "Operasional",     Icon: Building2,       permKey: "operasional", subItems: OPS_SUB_ITEMS },
   { href: ROUTES.FINANCE, label: "Keuangan",         Icon: Wallet,          permKey: "keuangan"       },
   { href: ROUTES.PRODUCT, label: "Produk",           Icon: Layers,          permKey: "produk"         },
   { href: ROUTES.GROWTH,  label: "Sales & Growth",   Icon: TrendingUp,      permKey: "salesGrowth"    },
@@ -89,31 +99,76 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-3 py-4 flex flex-col gap-0.5">
-        {visibleNav.map(({ href, label, Icon }) => {
-          const isActive = href === ROUTES.HOME
+        {visibleNav.map(({ href, label, Icon, subItems }) => {
+          const isParentActive = href === ROUTES.HOME
             ? pathname === "/"
             : pathname.startsWith(href);
+
+          // Show sub-items when parent is active and has sub-items
+          const showSub = isParentActive && subItems && subItems.length > 0;
+
           return (
-            <Link
-              key={href}
-              href={href}
-              onClick={onClose}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-medium transition-all",
-                isActive
-                  ? "bg-fammi text-white shadow-fammi"
-                  : "text-text-secondary hover:bg-fammi-100 hover:text-fammi-dark",
-              )}
-            >
-              <Icon
-                size={17}
+            <div key={href}>
+              <Link
+                href={href}
+                onClick={onClose}
                 className={cn(
-                  "shrink-0 transition-colors",
-                  isActive ? "text-white" : "text-text-secondary",
+                  "flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-medium transition-all",
+                  isParentActive
+                    ? "bg-fammi text-white shadow-fammi"
+                    : "text-text-secondary hover:bg-fammi-100 hover:text-fammi-dark",
                 )}
-              />
-              {label}
-            </Link>
+              >
+                <Icon
+                  size={17}
+                  className={cn(
+                    "shrink-0 transition-colors",
+                    isParentActive ? "text-white" : "text-text-secondary",
+                  )}
+                />
+                <span className="flex-1">{label}</span>
+                {subItems && (
+                  <ChevronRight
+                    size={13}
+                    className={cn(
+                      "transition-transform duration-200",
+                      isParentActive ? "text-white/70 rotate-90" : "text-text-secondary/50",
+                    )}
+                  />
+                )}
+              </Link>
+
+              {/* Sub-menu */}
+              {showSub && (
+                <div className="mt-0.5 ml-4 pl-3 border-l-2 border-fammi-200 flex flex-col gap-0.5">
+                  {subItems.map(({ href: subHref, label: subLabel, Icon: SubIcon, exact }) => {
+                    const isSubActive = exact ? pathname === subHref : pathname.startsWith(subHref);
+                    return (
+                      <Link
+                        key={subHref}
+                        href={subHref}
+                        onClick={onClose}
+                        className={cn(
+                          "flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all",
+                          isSubActive
+                            ? "bg-fammi-100 text-fammi font-semibold"
+                            : "text-text-secondary hover:bg-fammi-50 hover:text-fammi-dark",
+                        )}
+                      >
+                        <SubIcon
+                          size={14}
+                          className={cn(
+                            "shrink-0",
+                            isSubActive ? "text-fammi" : "text-text-secondary",
+                          )}
+                        />
+                        {subLabel}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           );
         })}
       </nav>

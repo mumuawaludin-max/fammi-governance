@@ -30,6 +30,9 @@ export type SheetName = (typeof SHEET_NAMES)[keyof typeof SHEET_NAMES];
 export const ROUTES = {
   HOME: "/",
   OPS: "/ops",
+  OPS_NARASI_GENERATOR: "/ops/narasi-generator",
+  OPS_NARASI_RAPOR_KARAKTER: "/ops/narasi-generator/rapor-karakter",
+  OPS_NARASI_CAPAIAN_PEMBELAJARAN: "/ops/narasi-generator/capaian-pembelajaran",
   FINANCE: "/finance",
   PRODUCT: "/product",
   GROWTH: "/growth",
