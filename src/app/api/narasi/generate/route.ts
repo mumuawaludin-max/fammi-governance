@@ -185,43 +185,49 @@ ATURAN PENEMPATAN KODE NK:
 Setiap narasi minimal 4 kalimat. Gunakan tool set_narasi_umum dengan field catatanUmumPerkembangan.`;
 }
 
-function promptKarakter(workbook: IParsedWorkbook): string {
-  const tierLabels = NARASI_KARAKTER_TIERS.map((t) => t.rentang).join(", ");
-  return `Buat narasi karakter untuk ${workbook.karakterList.length} karakter × 6 rentang skor = ${workbook.karakterList.length * 6} baris total.
+function promptKarakterSingle(karakter: string, workbook: IParsedWorkbook): string {
+  const map: Record<string, string[]> = {};
+  for (const row of workbook.indikatorGuru) {
+    if (!row.karakter) continue;
+    if (!map[row.karakter]) map[row.karakter] = [];
+    const ind = row.indikatorPencapaian || "";
+    if (ind && !map[row.karakter].includes(ind)) map[row.karakter].push(ind);
+  }
+  const inds = (map[karakter] ?? []).slice(0, 5).join("; ") || "indikator umum";
+  const tierLines = NARASI_KARAKTER_TIERS.map((t, i) => `${i + 1}. ${t.rentang}`).join("\n");
 
-KARAKTER DAN INDIKATOR:
-${indikatorSummary(workbook)}
+  return `Buat TEPAT 6 narasi karakter "${karakter}" — satu per rentang skor, urutan wajib:
+${tierLines}
 
-RENTANG SKOR (field rentangSkorIndikator harus persis): ${tierLabels}
+INDIKATOR ${karakter}: ${inds}
 
-ATURAN NARASI PER KARAKTER (WAJIB):
-- Awali setiap narasi dengan kata penghubung yang menyebut nama karakter secara eksplisit.
-  Format: "Dalam karakter [nama_karakter], Ananda ..." atau "Pada karakter [nama_karakter], Ananda ..."
-  Huruf pertama kapital, narasi diakhiri titik.
-- JANGAN awali narasi dengan kata "Bagus" atau pujian singkat tanpa konteks.
-- Sebutkan minimal satu indikator spesifik dari daftar indikator karakter tersebut di atas dalam narasi.
-- Skor rendah = ruang tumbuh, bukan kekurangan. Bahasa hangat dan apresiatif.
-- 3-4 kalimat per narasi, unik per karakter.
+ATURAN WAJIB:
+- Output TEPAT 6 rows, urutan PERSIS seperti daftar di atas.
+- Field rentangSkorIndikator harus PERSIS sama dengan label di atas (salin bulat-bulat).
+- Awali setiap narasi: "Dalam karakter ${karakter}, Ananda ..." atau "Pada karakter ${karakter}, Ananda ..."
+- Sebutkan minimal satu indikator spesifik dalam narasi.
+- JANGAN awali dengan "Bagus".
+- Skor rendah = ruang tumbuh. 3-4 kalimat per narasi, diakhiri titik.
 
 Gunakan tool set_narasi_karakter.`;
 }
 
-function promptKeselarasan(workbook: IParsedWorkbook): string {
-  const tierLabels = NARASI_KESELARASAN_TIERS.map((t) => t.rentang).join(", ");
-  return `Buat narasi keselarasan untuk ${workbook.karakterList.length} karakter × 5 rentang = ${workbook.karakterList.length * 5} baris total.
+function promptKeselarasanSingle(karakter: string): string {
+  const tierLines = NARASI_KESELARASAN_TIERS.map((t, i) => `${i + 1}. ${t.rentang}`).join("\n");
 
-KARAKTER: ${workbook.karakterList.join(", ")}
-RENTANG SKOR (field rentangSkorIndikator harus persis): ${tierLabels}
+  return `Buat TEPAT 5 narasi keselarasan untuk karakter "${karakter}" — urutan wajib:
+${tierLines}
 
-Untuk rentang "0% (belum ada refleksi)": narasiHasilDariSekolah WAJIB diisi "—" (tanda dash), hanya narasiHasilDariOrangtua yang berisi narasi.
-Untuk rentang lainnya: narasiHasilDariSekolah = 2 kalimat observasi guru, narasiHasilDariOrangtua = 3 kalimat panduan dengan 3 langkah konkret.
+ATURAN:
+- Output TEPAT 5 rows, urutan PERSIS seperti daftar di atas.
+- Field rentangSkorIndikator harus PERSIS sama dengan label di atas (salin bulat-bulat).
+- Rentang "0% (belum ada refleksi)": field narasiHasilDariSekolah WAJIB diisi "—" saja.
+- Rentang lainnya: narasiHasilDariSekolah = 2 kalimat observasi guru (Ananda...).
 
-ATURAN PENTING narasiHasilDariOrangtua:
-- Ini adalah kalimat yang diucapkan orangtua LANGSUNG kepada anak — bukan narasi tentang anak.
-- JANGAN gunakan kata "Ananda" — ini BUKAN narasi sekolah.
-- Gunakan kata ganti "kamu" atau panggilan akrab (misal: "Nak, kamu sudah...") saat menyebut anak.
-- Contoh benar: "Nak, kamu sudah menunjukkan karakter yang luar biasa..." atau "Yuk, kita coba bersama..."
-- Contoh SALAH: "Ananda telah menunjukkan..." (ini kalimat sekolah, bukan orangtua ke anak).
+ATURAN narasiHasilDariOrangtua (SEMUA rentang termasuk 0%):
+- Kalimat orangtua berbicara LANGSUNG ke anak. JANGAN pakai "Ananda".
+- Gunakan "kamu" atau "Nak, kamu...". 3 kalimat dengan 3 langkah konkret.
+- Contoh: "Nak, kamu sudah..." / "Yuk, kita coba bersama..."
 
 Gunakan tool set_narasi_keselarasan.`;
 }
@@ -286,46 +292,29 @@ export async function POST(req: Request) {
     const client = new Anthropic({ apiKey });
     const system = buildSystem(jenjang, narrativeTone);
 
-    type UmumInput  = { rows: { hasilPredikat: string; catatanUmumPerkembangan: string }[] };
-    type KarInput   = { rows: { karakter: string; rentangSkorIndikator: string; narasi: string }[] };
-    type KesInput   = { rows: { karakter: string; rentangSkorIndikator: string; narasiHasilDariSekolah: string; narasiHasilDariOrangtua: string }[] };
+    type UmumInput = { rows: { hasilPredikat: string; catatanUmumPerkembangan: string }[] };
+    type KarInput  = { rows: { karakter: string; rentangSkorIndikator: string; narasi: string }[] };
+    type KesInput  = { rows: { karakter: string; rentangSkorIndikator: string; narasiHasilDariSekolah: string; narasiHasilDariOrangtua: string }[] };
 
-    const [resUmum, resKarakter, resKeselarasan] = await Promise.all([
-      callWithTool<UmumInput>(client, system, promptUmum(workbook),        toolNarasiUmum),
-      callWithTool<KarInput> (client, system, promptKarakter(workbook),    toolNarasiKarakter),
-      callWithTool<KesInput> (client, system, promptKeselarasan(workbook), toolNarasiKeselarasan),
-    ]);
+    // Narasi Umum — satu call, hanya 6 rows, aman dari token limit
+    const resUmum = await callWithTool<UmumInput>(client, system, promptUmum(workbook), toolNarasiUmum);
 
-    // ── Assemble Narasi Umum ───────────────────────────────────
-
-    const narasiUmum: INarasiUmumRow[] = NARASI_UMUM_TIERS.map((tier) => {
-      const row = resUmum.rows.find((r) => r.hasilPredikat === tier.hasilPredikat);
-      return {
-        hasilPredikat:           tier.hasilPredikat,
-        nilaiAwal:               tier.nilaiAwal,
-        nilaiAkhir:              tier.nilaiAkhir,
-        catatanUmumPerkembangan: row?.catatanUmumPerkembangan ?? `(Predikat ${tier.hasilPredikat} belum dihasilkan)`,
-      };
-    });
-
-    // ── Assemble Narasi Karakter & Keselarasan ─────────────────
-    // Urutan: karakter outer, tier inner (sesuai workbook)
-
+    // Narasi Karakter + Keselarasan — PER KARAKTER (1 call per karakter per tipe)
+    // Penyebab bug sebelumnya: satu call untuk semua karakter → JSON > 8000 token → terpotong → kosong.
+    // Solusi: setiap karakter = 2 call paralel (karakter 6 rows + keselarasan 5 rows) — kecil, reliable.
     const narasiKarakter:    INarasiKarakterRow[]    = [];
     const narasiKeselarasan: INarasiKeselarasanRow[] = [];
 
-    // Index-based lookup helpers — Claude kadang mengembalikan dash berbeda (en-dash vs hyphen)
-    // sehingga string match gagal. Pakai urutan index yang deterministik.
-    const karIdx = (karakter: string, tierIdx: number) =>
-      workbook.karakterList.indexOf(karakter) * NARASI_KARAKTER_TIERS.length + tierIdx;
-    const kesIdx = (karakter: string, tierIdx: number) =>
-      workbook.karakterList.indexOf(karakter) * NARASI_KESELARASAN_TIERS.length + tierIdx;
-
     for (const karakter of workbook.karakterList) {
-      // Narasi Karakter — 6 tier NARASI_KARAKTER_TIERS
+      const [resK, resKS] = await Promise.all([
+        callWithTool<KarInput>(client, system, promptKarakterSingle(karakter, workbook), toolNarasiKarakter),
+        callWithTool<KesInput>(client, system, promptKeselarasanSingle(karakter),        toolNarasiKeselarasan),
+      ]);
+
+      // Index 0..5 = 6 tier karakter — dijamin terurut karena 1 karakter per call
       for (let ti = 0; ti < NARASI_KARAKTER_TIERS.length; ti++) {
         const tier = NARASI_KARAKTER_TIERS[ti];
-        const rK = resKarakter.rows[karIdx(karakter, ti)];
+        const rK = resK.rows[ti];
         narasiKarakter.push({
           karakter,
           rentangSkorIndikator: tier.rentang,
@@ -335,10 +324,10 @@ export async function POST(req: Request) {
         });
       }
 
-      // Narasi Keselarasan — 5 tier NARASI_KESELARASAN_TIERS
+      // Index 0..4 = 5 tier keselarasan — dijamin terurut karena 1 karakter per call
       for (let ti = 0; ti < NARASI_KESELARASAN_TIERS.length; ti++) {
         const tier = NARASI_KESELARASAN_TIERS[ti];
-        const rKS = resKeselarasan.rows[kesIdx(karakter, ti)];
+        const rKS = resKS.rows[ti];
         const isZero = tier.rentang === "0% (belum ada refleksi)";
         narasiKeselarasan.push({
           karakter,
@@ -352,6 +341,18 @@ export async function POST(req: Request) {
         });
       }
     }
+
+    // ── Assemble Narasi Umum ───────────────────────────────────
+
+    const narasiUmum: INarasiUmumRow[] = NARASI_UMUM_TIERS.map((tier) => {
+      const row = resUmum.rows.find((r) => r.hasilPredikat === tier.hasilPredikat);
+      return {
+        hasilPredikat:           tier.hasilPredikat,
+        nilaiAwal:               tier.nilaiAwal,
+        nilaiAkhir:              tier.nilaiAkhir,
+        catatanUmumPerkembangan: row?.catatanUmumPerkembangan ?? `(Predikat ${tier.hasilPredikat} belum dihasilkan)`,
+      };
+    });
 
     const indikatorGuruColumns  = workbook.rawIndikatorGuru.length  > 0 ? Object.keys(workbook.rawIndikatorGuru[0])  : [];
     const rubrikOrangtuaColumns = workbook.rawRubrikOrangtua.length > 0 ? Object.keys(workbook.rawRubrikOrangtua[0]) : [];
