@@ -148,19 +148,6 @@ const toolNarasiKeselarasan: Anthropic.Tool = {
 
 // ── Prompt builders ───────────────────────────────────────────
 
-function indikatorSummary(workbook: IParsedWorkbook): string {
-  const map: Record<string, string[]> = {};
-  for (const row of workbook.indikatorGuru) {
-    const k = row.karakter; if (!k) continue;
-    if (!map[k]) map[k] = [];
-    const ind = row.indikatorPencapaian || "";
-    if (ind && !map[k].includes(ind)) map[k].push(ind);
-  }
-  return workbook.karakterList.map((k) => {
-    const inds = (map[k] ?? []).slice(0, 3).join("; ");
-    return `- ${k}: ${inds || "indikator umum"}`;
-  }).join("\n");
-}
 
 function promptUmum(workbook: IParsedWorkbook): string {
   const karakterList = workbook.karakterList.slice(0, 7);
