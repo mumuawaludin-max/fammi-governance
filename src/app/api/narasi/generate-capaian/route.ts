@@ -141,7 +141,13 @@ TONE FAMMI WAJIB:
 - Gunakan: sedang berproses, patut diapresiasi, mulai tampak, perlu penguatan
 - JANGAN gunakan "dilatih pelan-pelan" — ganti: dikuatkan secara bertahap, dibiasakan secara konsisten, diperkuat melalui rutinitas sederhana
 - Ayah Bunda sebagai mitra aktif
-- Panduan rumah: konkret dan spesifik pada indikator`;
+- Panduan rumah: konkret dan spesifik pada indikator
+
+LARANGAN GLOBAL (berlaku untuk semua narasi):
+- JANGAN campur kata ganti orang pertama "aku" dan "saya" dalam satu kalimat atau satu narasi — pilih satu dan konsisten.
+- JANGAN tulis contoh kalimat anak yang ambigu secara sosial atau mengandung konteks sensitif jenis kelamin.
+- JANGAN tulis "pemahaman yang solid" → gunakan "pemahaman yang baik" atau "pemahaman yang berkembang".
+- JANGAN tulis "menghadapi X indikator" atau "indikator yang kaya" → framing harus positif dan ringan.`;
 }
 
 // ── Claude API call dengan tool use ──────────────────────────
@@ -346,6 +352,11 @@ Untuk SETIAP baris (urutan WAJIB sama), isi 3 field:
 - deskripsiMBBB: 2 kalimat untuk anak Masih/Belum Berkembang (hangat). Kalimat 1: gambaran positif kesiapan. Kalimat 2: harapan pendampingan.
 - solusiRumah: 1 kalimat rekomendasi konkret yang spesifik pada indikator ini.
 
+LARANGAN WAJIB (DILARANG KERAS):
+- JANGAN tulis contoh kalimat anak yang ambigu secara sosial (misal: "bersama tetangga atau saudara dari berbagai jenis kelamin") — gunakan konteks sekolah/rumah yang netral.
+- JANGAN campur kata ganti orang pertama: pilih SATU saja, "aku" ATAU "saya", konsisten dalam satu narasi. Jangan ada kalimat yang pakai keduanya sekaligus.
+- JANGAN pakai "pemahaman yang solid" → gunakan "pemahaman yang baik" atau "pemahaman yang berkembang".
+
 Gunakan tool set_capaian_rows. Output TEPAT ${batch.length} rows.`;
 }
 
@@ -404,6 +415,10 @@ Untuk setiap elemen, isi 2 field:
 - narasiCapaian: 2-3 kalimat, seluruh indikator tercapai optimal. Sebutkan nama elemen dan jumlah indikator. Apresiasi kuat.
 - ideSederhana: 2 kalimat rekomendasi MEMPERTAHANKAN capaian di rumah (bukan remedial). JANGAN pakai "dilatih pelan-pelan".
 
+LARANGAN:
+- JANGAN tulis "pemahaman yang solid" → gunakan "pemahaman yang baik", "pemahaman yang berkembang", atau "pemahaman yang menguat".
+- JANGAN campur kata ganti: pilih "aku" atau "saya", konsisten dalam satu narasi.
+
 Gunakan tool set_narasi_100. Output TEPAT ${workbook.elemenList.length} rows.`;
 }
 
@@ -448,8 +463,12 @@ ELEMEN:
 ${elemenInfo}
 
 Untuk setiap elemen, field halHalBaik berisi 2 kalimat hangat:
-- Kalimat 1: gambaran positif (sebutkan nama elemen + jumlah indikator, framing sebagai ruang tumbuh).
+- Kalimat 1: framing positif sebagai awal perjalanan belajar. JANGAN tulis "ananda menghadapi X indikator yang kaya..." — gunakan pola seperti "Ananda mulai mengenali berbagai kegiatan yang berkaitan dengan [nama elemen]..." atau "Perjalanan Ananda dalam [nama elemen] baru saja dimulai...".
 - Kalimat 2: harapan pendampingan bertahap bersama Ayah Bunda.
+
+LARANGAN:
+- JANGAN tulis "menghadapi X indikator" — hindari framing beban/tantangan.
+- JANGAN tulis "indikator yang kaya" — terlalu formal dan terasa seperti laporan teknis.
 
 Gunakan tool set_narasi_0. Output TEPAT ${workbook.elemenList.length} rows.`;
 }
