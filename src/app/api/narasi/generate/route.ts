@@ -314,12 +314,18 @@ export async function POST(req: Request) {
     const narasiKarakter:    INarasiKarakterRow[]    = [];
     const narasiKeselarasan: INarasiKeselarasanRow[] = [];
 
+    // Index-based lookup helpers — Claude kadang mengembalikan dash berbeda (en-dash vs hyphen)
+    // sehingga string match gagal. Pakai urutan index yang deterministik.
+    const karIdx = (karakter: string, tierIdx: number) =>
+      workbook.karakterList.indexOf(karakter) * NARASI_KARAKTER_TIERS.length + tierIdx;
+    const kesIdx = (karakter: string, tierIdx: number) =>
+      workbook.karakterList.indexOf(karakter) * NARASI_KESELARASAN_TIERS.length + tierIdx;
+
     for (const karakter of workbook.karakterList) {
       // Narasi Karakter — 6 tier NARASI_KARAKTER_TIERS
-      for (const tier of NARASI_KARAKTER_TIERS) {
-        const rK = resKarakter.rows.find(
-          (r) => r.karakter === karakter && r.rentangSkorIndikator === tier.rentang,
-        );
+      for (let ti = 0; ti < NARASI_KARAKTER_TIERS.length; ti++) {
+        const tier = NARASI_KARAKTER_TIERS[ti];
+        const rK = resKarakter.rows[karIdx(karakter, ti)];
         narasiKarakter.push({
           karakter,
           rentangSkorIndikator: tier.rentang,
@@ -330,10 +336,9 @@ export async function POST(req: Request) {
       }
 
       // Narasi Keselarasan — 5 tier NARASI_KESELARASAN_TIERS
-      for (const tier of NARASI_KESELARASAN_TIERS) {
-        const rKS = resKeselarasan.rows.find(
-          (r) => r.karakter === karakter && r.rentangSkorIndikator === tier.rentang,
-        );
+      for (let ti = 0; ti < NARASI_KESELARASAN_TIERS.length; ti++) {
+        const tier = NARASI_KESELARASAN_TIERS[ti];
+        const rKS = resKeselarasan.rows[kesIdx(karakter, ti)];
         const isZero = tier.rentang === "0% (belum ada refleksi)";
         narasiKeselarasan.push({
           karakter,
