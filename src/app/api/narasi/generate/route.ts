@@ -348,18 +348,33 @@ function promptKeselarasanSingle(karakter: string): string {
   return `Buat TEPAT 5 narasi keselarasan untuk karakter "${karakter}" — urutan wajib:
 ${tierLines}
 
-ATURAN:
-- Output TEPAT 5 rows, urutan PERSIS seperti daftar di atas.
-- Field rentangSkorIndikator harus PERSIS sama dengan label di atas (salin bulat-bulat).
-- Rentang "0% (belum ada refleksi)": field narasiHasilDariSekolah WAJIB diisi "—" saja.
-- Rentang lainnya: narasiHasilDariSekolah = 2 kalimat observasi guru (Ananda...).
+KONTEKS SUDUT PANDANG:
+Narasi ini ditulis dari sudut pandang GURU yang berbicara kepada Ayah Bunda.
+- narasiHasilDariSekolah = guru melaporkan pengamatan di sekolah
+- narasiHasilDariOrangtua = guru merangkum/merefleksikan apa yang Ayah Bunda laporkan dari rumah
+
+ATURAN narasiHasilDariSekolah:
+- Rentang "0% (belum ada refleksi)": WAJIB diisi "—" saja (satu karakter).
+- Rentang lainnya: 2 kalimat, sudut pandang guru melaporkan pengamatan di sekolah.
+- WAJIB gunakan bridging pembuka yang BERBEDA untuk setiap tier. Contoh variasi:
+  Tier 1: "Dari pengamatan kami di sekolah, Ananda ..."
+  Tier 2: "Selama di sekolah, kami melihat Ananda ..."
+  Tier 3: "Berdasarkan pengamatan guru di kelas, Ananda ..."
+  Tier 4: "Di lingkungan sekolah, Ananda ..."
+  Tier 5: "Dalam keseharian Ananda di sekolah, ..."
+- JANGAN pakai bridging yang sama di dua tier berbeda.
 
 ATURAN narasiHasilDariOrangtua (SEMUA rentang termasuk 0%):
-- WAJIB diawali: "Sementara berdasarkan penilaian Ayah Bunda, Ananda ..."
-- Lanjutkan dengan observasi singkat dari sudut pandang orangtua, lalu 1-2 langkah konkret yang bisa dilakukan bersama di rumah.
-- Gunakan sapaan "Ananda" (bukan "kamu" atau "Nak").
-- 2-3 kalimat, diakhiri titik.
-- Contoh: "Sementara berdasarkan penilaian Ayah Bunda, Ananda sudah mulai menunjukkan kebiasaan berbagi di rumah. Yuk, Ayah Bunda terus dukung dengan memberi kesempatan Ananda membantu adik atau teman yang membutuhkan."
+- Guru merangkum pengamatan Ayah Bunda dari rumah — tetap suara guru, bukan suara orangtua.
+- WAJIB gunakan bridging pembuka yang BERBEDA untuk setiap tier. Contoh variasi:
+  Tier 1: "Sementara itu, berdasarkan yang Ayah Bunda sampaikan, Ananda ..."
+  Tier 2: "Dari catatan Ayah Bunda di rumah, Ananda ..."
+  Tier 3: "Jika kami melihat dari pengamatan Ayah Bunda, Ananda ..."
+  Tier 4: "Menurut Ayah Bunda, di rumah Ananda ..."
+  Tier 5: "Berdasarkan refleksi Ayah Bunda, Ananda ..."
+- JANGAN pakai bridging yang sama di dua tier berbeda.
+- Lanjutkan dengan observasi dari sudut pandang rumah, lalu 1 langkah konkret yang bisa dilakukan bersama.
+- Gunakan sapaan "Ananda" dan "Ayah Bunda". 2-3 kalimat, diakhiri titik.
 
 Gunakan tool set_narasi_keselarasan.`;
 }
