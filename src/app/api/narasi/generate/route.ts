@@ -62,13 +62,150 @@ WAJIB TONE FAMMI:
 - Panduan orangtua: 3 langkah konkret
 - JANGAN sebut nama sekolah atau jenjang dalam narasi
 
-LARANGAN FRASA (DILARANG KERAS — akan menyebabkan output ditolak):
-- JANGAN tulis "aspek pembelajaran" → gunakan "karakter"
-- JANGAN tulis "indikator pembelajaran" → gunakan "indikator"
-- JANGAN tulis "penguasaan nyaris sempurna" → gunakan "capaian indikator yang sangat baik"
-- JANGAN tulis "menguasai X indikator secara solid" → gunakan "mencapai X indikator"
-- JANGAN awali kalimat dengan kata "Bagus"
-- JANGAN gunakan karakter em-dash (—) di dalam teks narasi. Jika ingin memisahkan klausa, gunakan koma atau buat kalimat baru.
+LARANGAN FRASA (DILARANG KERAS):
+
+[A] KATA KERJA FORMAL BERLEBIHAN — ganti dengan kata sehari-hari:
+- "mendemonstrasikan" → "menunjukkan"
+- "mengimplementasikan" → "menerapkan"
+- "mengoptimalkan" → "meningkatkan"
+- "memanifestasikan" → "menunjukkan"
+- "menginternalisasi" → "menghayati" atau "menyerap"
+- "mengaktualisasikan" → "menerapkan"
+- "mengekspresikan" → "menunjukkan" atau "mengungkapkan"
+- "berpartisipasi secara aktif" → "ikut serta" atau "turut"
+- "telah berhasil menunjukkan" → cukup "menunjukkan"
+- "berhasil membuktikan" → cukup "menunjukkan"
+- "mampu membuktikan bahwa" → langsung saja ke fakta
+
+[B] FRASA PUJIAN BOMBASTIS — jangan dipakai sama sekali:
+- "luar biasa", "mengagumkan", "membanggakan", "terpuji", "terbaik"
+- "sangat mengesankan", "sangat membanggakan", "sungguh membanggakan"
+- "capaian gemilang", "prestasi gemilang", "hasil yang gemilang"
+- "fondasi yang kokoh", "pondasi yang kuat"
+- "semangat yang membara", "tekad yang kuat", "jiwa yang mulia"
+- "potensi yang besar", "talenta yang luar biasa"
+- "karakter yang matang", "kepribadian yang matang"
+- "menjadi teladan", "menjadi contoh", "patut dibanggakan"
+- "kekuatan yang indah sepanjang hidup"
+
+[C] FRASA PERTUMBUHAN KLISE — ganti yang sederhana:
+- "pertumbuhan yang mengesankan" → "perkembangan yang baik"
+- "kemajuan yang pesat" → "kemajuan yang terlihat"
+- "perkembangan yang signifikan" → "perkembangan yang nyata"
+- "solid dan terukur" → "baik dan mulai konsisten"
+- "konsisten dan berkelanjutan" → cukup "konsisten" atau "terus-menerus"
+- "menguasai X indikator secara solid" → "mencapai X indikator"
+- "penguasaan nyaris sempurna" → "capaian indikator yang sangat baik"
+
+[D] KATA AKADEMIK TIDAK PERLU — hindari:
+- "aspek pembelajaran" → "karakter"
+- "indikator pembelajaran" → "indikator"
+- "proses internalisasi nilai" → "pembiasaan" atau "latihan"
+- "pengembangan karakter yang holistik" → hapus, cukup sebutkan karakternya
+- "secara komprehensif", "secara holistik" → hapus saja
+- "dalam konteks pembelajaran" → hapus saja
+- "dimensi karakter", "domain karakter" → cukup "karakter"
+- "optimal", "maksimal" → "baik" atau "sebaik mungkin"
+- "dalam rangka pengembangan karakter" → hapus saja
+- "sebagai bagian dari proses pembelajaran" → hapus saja
+
+[E] PEMBUKA KALIMAT AI-ISH — jangan dipakai:
+- "Bagus, Ananda..." atau diawali kata "Bagus"
+- "Sangat menggembirakan bahwa..."
+- "Patut diapresiasi bahwa..."
+- "Tidak dapat dipungkiri bahwa..."
+- "Hal ini menunjukkan bahwa..." (sebagai pembuka)
+- "Secara keseluruhan, Ananda..."
+- "Pada akhirnya..."
+- "Dalam perjalanan ini..."
+- "Sungguh, Ananda..."
+- "Dengan demikian, Ananda..." (sebagai pembuka)
+- "Oleh karena itu, Ananda..." (sebagai pembuka)
+- "Lebih lanjut, Ananda..."
+- "Perlu diketahui bahwa..."
+- "Penting untuk dicatat bahwa..."
+- "Tidak lupa kami sampaikan bahwa..."
+
+[F] PENUTUP KALIMAT KLISE — hindari:
+- "terus berkarya dengan sepenuh hati"
+- "jadikan sebagai bekal sepanjang hayat"
+- "menjadi bekal berharga di masa depan"
+- "terus tumbuh dan berkembang" (terlalu generik, tanpa arah konkret)
+- "semoga terus meningkat" (tanpa langkah konkret)
+- "semoga menjadi insan yang mulia" (terlalu berat untuk narasi karakter)
+- "Ananda akan menjadi pribadi yang..." (prediksi, bukan observasi)
+- "Kami yakin Ananda akan..." (terlalu percaya diri)
+- "Ananda berpotensi menjadi..." (spekulasi)
+
+[G] KATA SIFAT DAN ADVERB BERPASANGAN — pilih satu, jangan dua sekaligus:
+- "tulus dan ikhlas" → pilih salah satu
+- "aktif dan antusias" → pilih salah satu
+- "rajin dan tekun" → pilih salah satu
+- "baik dan benar" → pilih salah satu
+- "sabar dan telaten" → pilih salah satu
+- "secara aktif dan antusias" → hapus salah satu
+- "dengan penuh kesadaran dan keikhlasan" → sederhanakan
+- "dengan sungguh-sungguh dan konsisten" → pilih salah satu
+Pasangan kata sifat seperti ini adalah tanda tulisan tidak jujur dan terasa seperti daftar.
+
+[H] KATA BENDA ABSTRAK TERLALU LUAS — selalu konkretkan:
+- "nilai-nilai luhur" → sebutkan karakternya secara spesifik
+- "nilai-nilai positif" → terlalu kabur, sebut konteks perilakunya
+- "hal-hal positif" → terlalu kabur
+- "perilaku yang baik" tanpa konteks → harus spesifik situasinya
+- "sikap yang terpuji" → sebutkan sikap apa konkretnya
+
+[I] KATA KEPASTIAN PALSU — hapus dari kalimat:
+- "tentunya Ananda..." → hapus "tentunya"
+- "pastinya akan..." → hapus "pastinya"
+- "tentu saja Ananda..." → hapus "tentu saja"
+- "sejatinya", "niscaya", "pada hakikatnya" → terlalu filosofis, hapus
+- "sudah tentu" → hapus
+
+[J] KATA PENGHUBUNG FILLER — hindari jika muncul lebih dari sekali per narasi:
+- "Selain itu, Ananda..." → pakai maksimal sekali, kalau bisa hindari
+- "Di samping itu, Ananda..."
+- "Adapun Ananda..."
+- "Sementara itu, Ananda..."
+- "dalam hal ini" → hapus, langsung ke poinnya
+- "terkait hal tersebut" → hapus
+- "dalam konteks ini" → hapus
+
+[K] HEDGING BERLAPIS — pilih satu lapisan, tidak boleh tiga:
+- "mulai berusaha untuk menunjukkan" → terlalu banyak keraguan, pilih: "mulai menunjukkan" atau "sudah menunjukkan"
+- "tampak mulai mencoba" → pilih satu: "mulai" atau "tampak"
+- "sudah mulai terlihat berupaya" → terlalu berlapis
+- "berupaya" dan "berusaha" sebagai pelarian dari fakta → tulis apa yang konkret terjadi, meski kecil
+- Skor rendah = ceritakan satu hal nyata yang sudah muncul, bukan "masih berusaha"
+
+[L] MONOTONI STRUKTUR KALIMAT:
+- JANGAN awali setiap kalimat dengan "Ananda" berturut-turut lebih dari dua kali
+- Variasikan pembuka: mulai dari konteks, aksi, situasi, atau ajakan
+- JANGAN buat 6 tier narasi yang hanya beda satu kata — setiap tier harus punya sudut pandang berbeda
+- Ritme yang sama di setiap kalimat = tanda tulisan AI
+
+[M] ATRIBUSI EMOSI TANPA BUKTI — jangan pakai:
+- "dengan antusias" → bagaimana tahu? Tulis aksinya saja
+- "dengan penuh semangat" → sama, tulis aksinya
+- "dengan gembira" → sama
+- "dengan bangga" → sama
+Emosi hanya boleh ditulis jika dideskripsikan dari perilaku yang terlihat, bukan diasumsikan.
+
+[N] "MERUPAKAN" YANG BERLEBIHAN:
+- "Hal ini merupakan sebuah pencapaian..." → langsung ke faktanya
+- "Ananda merupakan pribadi yang..." → tulis ulang jadi kalimat aktif
+- "merupakan" boleh dipakai, tapi maksimal sekali per narasi
+
+[O] JARGON PENDIDIKAN YANG BOCOR KE NARASI ORANGTUA:
+- "capaian belajar" → cukup "capaian"
+- "kompetensi" → "kemampuan" atau langsung sebut perilakunya
+- "rubrik", "KKM", "standar kompetensi" → jangan sebut sama sekali
+- "penilaian formatif/sumatif" → jangan sebut
+
+[P] KARAKTER TIPOGRAFI:
+- JANGAN gunakan em-dash (—) dalam teks narasi. Gunakan koma atau buat kalimat baru.
+
+PRINSIP UTAMA: Tulis seperti guru yang benar-benar mengenal anak ini. Kalimat pendek, jujur, spesifik. Satu kalimat = satu fakta atau satu langkah. Hindari kata yang ditulis untuk terkesan, bukan untuk berkomunikasi.
 
 Placeholder seperti {NK1}, {nama_panggilan}, {total_indikator} JANGAN diubah.`;
 }
@@ -187,15 +324,20 @@ function promptKarakterSingle(karakter: string, workbook: IParsedWorkbook): stri
   return `Buat TEPAT 6 narasi karakter "${karakter}" — satu per rentang skor, urutan wajib:
 ${tierLines}
 
-INDIKATOR ${karakter}: ${inds}
+KONTEKS INDIKATOR ${karakter} (gunakan sebagai referensi memahami karakternya, JANGAN disebut langsung di narasi): ${inds}
+
+MENGAPA INDIKATOR TIDAK BOLEH DISEBUT LANGSUNG:
+Skor 80% tidak berarti semua indikator merata. Bisa jadi 4 dari 5 indikator sudah konsisten, tapi satu belum muncul. Jika narasi menyebut indikator spesifik, bisa tidak akurat untuk sebagian anak. Narasi ini dipakai untuk semua anak di rentang skor tersebut — tulis gambaran pola dan kecenderungan perilaku yang mewakili rentang ini secara umum.
 
 ATURAN WAJIB:
 - Output TEPAT 6 rows, urutan PERSIS seperti daftar di atas.
 - Field rentangSkorIndikator harus PERSIS sama dengan label di atas (salin bulat-bulat).
-- Awali setiap narasi: "Dalam karakter ${karakter}, Ananda ..." atau "Pada karakter ${karakter}, Ananda ..."
-- Sebutkan minimal satu indikator spesifik dalam narasi.
-- JANGAN awali dengan "Bagus".
-- Skor rendah = ruang tumbuh. 3-4 kalimat per narasi, diakhiri titik.
+- Awali setiap narasi dengan variasi berbeda — JANGAN semua diawali "Dalam karakter ${karakter}, Ananda..."
+  Variasikan: bisa dimulai dari situasi, pola perilaku, kecenderungan yang terlihat, atau ajakan konkret.
+- JANGAN sebut nama indikator secara harfiah.
+- Gambarkan pola perilaku dan kecenderungan yang mencerminkan rentang skor tersebut.
+- Skor rendah = ruang tumbuh, ceritakan satu hal nyata yang sudah mulai terlihat.
+- 3-4 kalimat per narasi, diakhiri titik.
 
 Gunakan tool set_narasi_karakter.`;
 }
@@ -213,9 +355,11 @@ ATURAN:
 - Rentang lainnya: narasiHasilDariSekolah = 2 kalimat observasi guru (Ananda...).
 
 ATURAN narasiHasilDariOrangtua (SEMUA rentang termasuk 0%):
-- Kalimat orangtua berbicara LANGSUNG ke anak. JANGAN pakai "Ananda".
-- Gunakan "kamu" atau "Nak, kamu...". 3 kalimat dengan 3 langkah konkret.
-- Contoh: "Nak, kamu sudah..." / "Yuk, kita coba bersama..."
+- WAJIB diawali: "Sementara berdasarkan penilaian Ayah Bunda, Ananda ..."
+- Lanjutkan dengan observasi singkat dari sudut pandang orangtua, lalu 1-2 langkah konkret yang bisa dilakukan bersama di rumah.
+- Gunakan sapaan "Ananda" (bukan "kamu" atau "Nak").
+- 2-3 kalimat, diakhiri titik.
+- Contoh: "Sementara berdasarkan penilaian Ayah Bunda, Ananda sudah mulai menunjukkan kebiasaan berbagi di rumah. Yuk, Ayah Bunda terus dukung dengan memberi kesempatan Ananda membantu adik atau teman yang membutuhkan."
 
 Gunakan tool set_narasi_keselarasan.`;
 }
