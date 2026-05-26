@@ -130,6 +130,24 @@ export function Step4Preview({
     return s;
   }, [recentChanges, narasiKeselarasanBase]);
 
+  // Derive target rows (karakter × tier) dari baris yang dipilih
+  const selectedTargetRows = useMemo<TargetRow[]>(() => {
+    const targets: TargetRow[] = [];
+    selected["narasi-karakter"].forEach((i) => {
+      const row = narasiKarakterBase[i];
+      if (row?.Karakter && row?.["Rentang Skor Indikator"]) {
+        targets.push({ karakter: String(row.Karakter), rentangSkorIndikator: String(row["Rentang Skor Indikator"]), type: "karakter" });
+      }
+    });
+    selected["narasi-keselarasan"].forEach((i) => {
+      const row = narasiKeselarasanBase[i];
+      if (row?.Karakter && row?.["Rentang Skor Indikator"]) {
+        targets.push({ karakter: String(row.Karakter), rentangSkorIndikator: String(row["Rentang Skor Indikator"]), type: "keselarasan" });
+      }
+    });
+    return targets;
+  }, [selected, narasiKarakterBase, narasiKeselarasanBase]);
+
   if (!preview || !wb) {
     return <div className="text-sm text-text-secondary">Preview belum tersedia. Kembali ke langkah sebelumnya.</div>;
   }
@@ -179,24 +197,6 @@ export function Step4Preview({
     onUpdatePreviewData(updated);
     onApprove();
   }
-
-  // Derive target rows (karakter × tier) dari baris yang dipilih
-  const selectedTargetRows = useMemo<TargetRow[]>(() => {
-    const targets: TargetRow[] = [];
-    selected["narasi-karakter"].forEach((i) => {
-      const row = narasiKarakterBase[i];
-      if (row?.Karakter && row?.["Rentang Skor Indikator"]) {
-        targets.push({ karakter: String(row.Karakter), rentangSkorIndikator: String(row["Rentang Skor Indikator"]), type: "karakter" });
-      }
-    });
-    selected["narasi-keselarasan"].forEach((i) => {
-      const row = narasiKeselarasanBase[i];
-      if (row?.Karakter && row?.["Rentang Skor Indikator"]) {
-        targets.push({ karakter: String(row.Karakter), rentangSkorIndikator: String(row["Rentang Skor Indikator"]), type: "keselarasan" });
-      }
-    });
-    return targets;
-  }, [selected, narasiKarakterBase, narasiKeselarasanBase]);
 
   const hasAnySelected =
     selected["narasi-karakter"].size > 0 ||
