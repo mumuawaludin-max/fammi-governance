@@ -35,10 +35,14 @@ const section = {
   }),
 };
 
+type TargetRow = { karakter: string; rentangSkorIndikator: string; type: "karakter" | "keselarasan" };
+
 export default function RaporKarakterPage() {
   const [formState, setFormState] = useState<INarasiFormState>(INITIAL_STATE);
   const [isParsing, setIsParsing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [partialTargets, setPartialTargets] = useState<TargetRow[] | null>(null);
+  const [recentChanges, setRecentChanges] = useState<TargetRow[]>([]);
 
   const updateState = useCallback((patch: Partial<INarasiFormState>) => {
     setFormState((prev) => ({ ...prev, ...patch }));
@@ -110,16 +114,77 @@ export default function RaporKarakterPage() {
 
   function handleApprove() {
     updateState({ isApproved: true, step: 5 });
+    setRecentChanges([]);
   }
 
   function handleRegenerate() {
+    setRecentChanges([]);
     updateState({ previewData: null, isApproved: false, step: 3 });
-    // Re-generate immediately
     setTimeout(() => goToStep4(), 10);
+  }
+
+  async function handleRegeneratePartial(targetRows: TargetRow[]) {
+    if (!formState.parsedWorkbook || !formState.jenjang) return;
+    setIsGenerating(true);
+    setPartialTargets(targetRows);
+    setRecentChanges([]);
+    try {
+      const res = await fetch("/api/narasi/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          namaSekolah: formState.namaSekolah,
+          jenjang: formState.jenjang,
+          levelList: formState.levelList,
+          narrativeTone: formState.narrativeTone,
+          workbook: formState.parsedWorkbook,
+          targetRows,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json() as { error?: string };
+        throw new Error(err.error ?? `HTTP ${res.status}`);
+      }
+      const json = await res.json() as { data: IPreviewData };
+      const partial = json.data;
+
+      // Merge partial results into existing previewData
+      setFormState((prev) => {
+        if (!prev.previewData) return prev;
+        const merged: IPreviewData = {
+          ...prev.previewData,
+          narasiKarakter: prev.previewData.narasiKarakter.map((row) => {
+            const updated = partial.narasiKarakter.find(
+              (r) => r.karakter === row.karakter && r.rentangSkorIndikator === row.rentangSkorIndikator
+            );
+            return updated ?? row;
+          }),
+          narasiKeselarasan: prev.previewData.narasiKeselarasan.map((row) => {
+            const updated = partial.narasiKeselarasan.find(
+              (r) => r.karakter === row.karakter && r.rentangSkorIndikator === row.rentangSkorIndikator
+            );
+            return updated ?? row;
+          }),
+        };
+        return { ...prev, previewData: merged, isApproved: false };
+      });
+      setRecentChanges(targetRows);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      alert(`Gagal regenerate: ${msg}`);
+    } finally {
+      setIsGenerating(false);
+      setPartialTargets(null);
+    }
+  }
+
+  function handleUpdatePreviewData(data: IPreviewData) {
+    updateState({ previewData: data });
   }
 
   function handleReset() {
     setFormState(INITIAL_STATE);
+    setRecentChanges([]);
   }
 
   return (
@@ -168,12 +233,16 @@ export default function RaporKarakterPage() {
                 </svg>
               </div>
               <div className="text-center max-w-sm">
-                <p className="text-sm font-bold text-text-primary">Claude sedang membuat narasi...</p>
+                <p className="text-sm font-bold text-text-primary">Fammi Intelligence System sedang Membuat Narasi...</p>
                 <p className="text-xs text-text-secondary mt-1.5 leading-relaxed">
-                  Menyusun narasi unik untuk <span className="font-semibold text-fammi">{formState.parsedWorkbook?.karakterList.length ?? 0} karakter</span> ×{" "}
-                  <span className="font-semibold text-fammi">{formState.levelList.length} level</span> sesuai jenjang{" "}
-                  {formState.jenjang ? { DAYCARE: "Daycare", TK: "TK", SD: "SD", SMP: "SMP", SMA: "SMA" }[formState.jenjang] : ""}{" "}
-                  dan tone Fammi. Proses ini membutuhkan 15–30 detik.
+                  {partialTargets ? (
+                    <>Membuat ulang <span className="font-semibold text-fammi">{partialTargets.length} baris</span> yang dipilih. Proses ini membutuhkan beberapa detik.</>
+                  ) : (
+                    <>Menyusun narasi unik untuk <span className="font-semibold text-fammi">{formState.parsedWorkbook?.karakterList.length ?? 0} karakter</span> ×{" "}
+                    <span className="font-semibold text-fammi">{formState.levelList.length} level</span> sesuai jenjang{" "}
+                    {formState.jenjang ? { DAYCARE: "Daycare", TK: "TK", SD: "SD", SMP: "SMP", SMA: "SMA" }[formState.jenjang] : ""}{" "}
+                    dan tone Fammi. Proses ini membutuhkan 15–30 detik.</>
+                  )}
                 </p>
               </div>
               <div className="flex items-center gap-2 text-xs text-text-secondary bg-fammi-50 rounded-2xl px-4 py-2 border border-fammi-100">
@@ -208,7 +277,10 @@ export default function RaporKarakterPage() {
               state={formState}
               onApprove={handleApprove}
               onRegenerate={handleRegenerate}
+              onRegeneratePartial={handleRegeneratePartial}
+              onUpdatePreviewData={handleUpdatePreviewData}
               onBack={() => updateState({ step: 3 })}
+              recentChanges={recentChanges}
             />
           ) : (
             <Step5Export

@@ -138,17 +138,153 @@ ${toneInstr}
 
 TONE FAMMI WAJIB:
 - Apresiatif: hindari gagal/buruk/lemah/nakal/malas/tidak bisa/tidak mampu
-- Gunakan: sedang berproses, patut diapresiasi, mulai tampak, perlu penguatan
+- Skor rendah = ruang tumbuh, bukan kekurangan
 - JANGAN gunakan "dilatih pelan-pelan" — ganti: dikuatkan secara bertahap, dibiasakan secara konsisten, diperkuat melalui rutinitas sederhana
 - Ayah Bunda sebagai mitra aktif
 - Panduan rumah: konkret dan spesifik pada indikator
+- JANGAN sebut nama sekolah atau jenjang dalam narasi
 
-LARANGAN GLOBAL (berlaku untuk semua narasi):
-- JANGAN campur kata ganti orang pertama "aku" dan "saya" dalam satu kalimat atau satu narasi — pilih satu dan konsisten.
+LARANGAN FRASA (DILARANG KERAS):
+
+[A] KATA KERJA FORMAL BERLEBIHAN — ganti dengan kata sehari-hari:
+- "mendemonstrasikan" → "menunjukkan"
+- "mengimplementasikan" → "menerapkan"
+- "mengoptimalkan" → "meningkatkan"
+- "memanifestasikan" → "menunjukkan"
+- "menginternalisasi" → "menghayati" atau "menyerap"
+- "mengaktualisasikan" → "menerapkan"
+- "mengekspresikan" → "menunjukkan" atau "mengungkapkan"
+- "berpartisipasi secara aktif" → "ikut serta" atau "turut"
+- "telah berhasil menunjukkan" → cukup "menunjukkan"
+- "berhasil membuktikan" → cukup "menunjukkan"
+- "mampu membuktikan bahwa" → langsung saja ke fakta
+
+[B] FRASA PUJIAN BOMBASTIS — jangan dipakai sama sekali:
+- "luar biasa", "mengagumkan", "membanggakan", "terpuji", "terbaik"
+- "sangat mengesankan", "sangat membanggakan", "sungguh membanggakan"
+- "capaian gemilang", "prestasi gemilang", "hasil yang gemilang"
+- "fondasi yang kokoh", "pondasi yang kuat"
+- "semangat yang membara", "tekad yang kuat", "jiwa yang mulia"
+- "potensi yang besar", "talenta yang luar biasa"
+- "karakter yang matang", "kepribadian yang matang"
+- "menjadi teladan", "menjadi contoh", "patut dibanggakan"
+
+[C] FRASA PERTUMBUHAN KLISE — ganti yang sederhana:
+- "pertumbuhan yang mengesankan" → "perkembangan yang baik"
+- "kemajuan yang pesat" → "kemajuan yang terlihat"
+- "perkembangan yang signifikan" → "perkembangan yang nyata"
+- "solid dan terukur" → "baik dan mulai konsisten"
+- "konsisten dan berkelanjutan" → cukup "konsisten"
+- "penguasaan nyaris sempurna" → "capaian yang sangat baik"
+
+[D] KATA AKADEMIK TIDAK PERLU — hindari:
+- "kompetensi" → "kemampuan" atau langsung sebut perilakunya
+- "rubrik", "KKM", "standar kompetensi" → jangan sebut sama sekali
+- "penilaian formatif/sumatif" → jangan sebut
+- "proses internalisasi nilai" → "pembiasaan" atau "latihan"
+- "secara komprehensif", "secara holistik" → hapus saja
+- "optimal", "maksimal" → "baik" atau "sebaik mungkin"
+- "pemahaman yang solid" → "pemahaman yang baik" atau "pemahaman yang berkembang"
+- "menghadapi X indikator" atau "indikator yang kaya" → framing harus positif dan ringan
+
+[E] PEMBUKA KALIMAT AI-ISH — jangan dipakai:
+- "Bagus, Ananda..." atau diawali kata "Bagus"
+- "Sangat menggembirakan bahwa..."
+- "Patut diapresiasi bahwa..."
+- "Tidak dapat dipungkiri bahwa..."
+- "Hal ini menunjukkan bahwa..." (sebagai pembuka)
+- "Secara keseluruhan, Ananda..."
+- "Pada akhirnya..."
+- "Dalam perjalanan ini..."
+- "Sungguh, Ananda..."
+- "Dengan demikian, Ananda..." (sebagai pembuka)
+- "Oleh karena itu, Ananda..." (sebagai pembuka)
+- "Lebih lanjut, Ananda..."
+- "Perlu diketahui bahwa..."
+- "Penting untuk dicatat bahwa..."
+
+[F] PENUTUP KALIMAT KLISE — hindari:
+- "terus berkarya dengan sepenuh hati"
+- "jadikan sebagai bekal sepanjang hayat"
+- "menjadi bekal berharga di masa depan"
+- "terus tumbuh dan berkembang" (terlalu generik, tanpa arah konkret)
+- "semoga terus meningkat" (tanpa langkah konkret)
+- "Ananda akan menjadi pribadi yang..." (prediksi, bukan observasi)
+- "Kami yakin Ananda akan..." (terlalu percaya diri)
+
+[G] KATA SIFAT DAN ADVERB BERPASANGAN — pilih satu, jangan dua sekaligus:
+- "aktif dan antusias", "rajin dan tekun", "baik dan benar", "sabar dan telaten" → pilih salah satu
+- "dengan sungguh-sungguh dan konsisten" → pilih salah satu
+Pasangan kata sifat adalah tanda tulisan tidak jujur dan terasa seperti daftar.
+
+[H] KATA BENDA ABSTRAK TERLALU LUAS — selalu konkretkan:
+- "nilai-nilai positif" → terlalu kabur, sebut konteks perilakunya
+- "hal-hal positif" → terlalu kabur
+- "perilaku yang baik" tanpa konteks → harus spesifik
+
+[I] KATA KEPASTIAN PALSU — hapus dari kalimat:
+- "tentunya Ananda...", "pastinya akan...", "tentu saja Ananda..." → hapus kata kepastiannya
+- "sejatinya", "niscaya", "pada hakikatnya" → terlalu filosofis, hapus
+
+[J] KATA PENGHUBUNG FILLER — hindari jika muncul lebih dari sekali per narasi:
+- "Selain itu, Ananda...", "Di samping itu, Ananda...", "Adapun Ananda..."
+- "dalam hal ini", "terkait hal tersebut", "dalam konteks ini" → hapus, langsung ke poinnya
+
+[K] HEDGING BERLAPIS — pilih satu lapisan, tidak boleh tiga:
+- "mulai berusaha untuk menunjukkan" → pilih: "mulai menunjukkan" atau "sudah menunjukkan"
+- "tampak mulai mencoba" → pilih satu: "mulai" atau "tampak"
+- "sudah mulai terlihat berupaya" → terlalu berlapis
+- Skor rendah = ceritakan satu hal nyata yang sudah muncul, bukan "masih berusaha"
+
+[L] MONOTONI STRUKTUR KALIMAT:
+- JANGAN awali setiap kalimat dengan "Ananda" berturut-turut lebih dari dua kali
+- Variasikan pembuka: mulai dari konteks, aksi, atau ajakan
+- Ritme yang sama di setiap kalimat = tanda tulisan AI
+
+[M] ATRIBUSI EMOSI TANPA BUKTI — jangan pakai:
+- "dengan antusias", "dengan penuh semangat", "dengan gembira", "dengan bangga" → tulis aksinya saja
+- Emosi hanya boleh ditulis jika dideskripsikan dari perilaku yang terlihat, bukan diasumsikan
+
+[N] "MERUPAKAN" YANG BERLEBIHAN:
+- "Hal ini merupakan sebuah pencapaian..." → langsung ke faktanya
+- "Ananda merupakan pribadi yang..." → tulis ulang jadi kalimat aktif
+- "merupakan" boleh dipakai, tapi maksimal sekali per narasi
+
+[O] KARAKTER TIPOGRAFI:
+- JANGAN gunakan em-dash (—) di dalam teks narasi. Gunakan koma atau buat kalimat baru.
+
+[P] KATA GANTI ORANG PERTAMA:
+- JANGAN campur "aku" dan "saya" dalam satu narasi — pilih satu dan konsisten.
 - JANGAN tulis contoh kalimat anak yang ambigu secara sosial atau mengandung konteks sensitif jenis kelamin.
-- JANGAN tulis "pemahaman yang solid" → gunakan "pemahaman yang baik" atau "pemahaman yang berkembang".
-- JANGAN tulis "menghadapi X indikator" atau "indikator yang kaya" → framing harus positif dan ringan.
-- JANGAN gunakan karakter em-dash (—) di dalam teks narasi. Jika ingin memisahkan klausa, gunakan koma atau buat kalimat baru.`;
+
+[Q] ABSTRAKSI BERLAPIS — GANTI DENGAN PERILAKU KONKRET:
+Pola ini adalah tanda paling khas tulisan AI: menggantikan perilaku nyata dengan klaim abstrak berlapis.
+
+- JANGAN jadikan sifat/karakter sebagai subjek kalimat:
+  - "Ketulusan Ananda sudah menjadi..." → tulis ulang: "Ananda membantu tanpa diminta..."
+  - "Kejujuran Ananda terlihat..." → "Ananda menyampaikan dengan apa adanya..."
+  Aturan: subjek kalimat harus "Ananda" atau situasi konkret, bukan nama sifatnya.
+
+- JANGAN pakai "sangat" sebagai intensifier:
+  - "sangat nyata", "sangat jelas", "sangat konsisten", "sangat baik" → hapus "sangat", pilih kata yang lebih tepat.
+
+- JANGAN klaim "sudah menjadi pola/kebiasaan" tanpa fakta:
+  - "sudah menjadi pola yang nyata", "sudah tertanam dalam dirinya", "sudah menjadi bagian dari dirinya" → hapus, tulis perilaku konkretnya.
+
+- JANGAN pakai frase penutup filler tanpa isi:
+  - "dalam kehidupan sehari-hari", "dalam aktivitas sehari-hari", "dalam keseharian Ananda" → hapus.
+
+LARANGAN SITUASI FIKTIF:
+- JANGAN mengarang situasi, konteks, media, atau aktivitas yang tidak ada secara eksplisit di teks indikator. Jika indikator tidak menyebut "bermain balok", "saat makan siang", "di halaman sekolah", maka narasi tidak boleh menyebutnya.
+- Tulis HANYA kecenderungan perilaku yang bisa disimpulkan dari teks indikator dan rentang skor. Tidak lebih.
+
+LARANGAN DIKSI ANEH:
+- "menguat", "terlihat menguat", "semakin menguat" → ganti: "sudah muncul", "mulai terlihat", "lebih konsisten"
+- "terwujud", "terealisasi" → ganti: "muncul", "terlihat"
+- "terinternalisasi" → ganti: "sudah menjadi kebiasaan"
+- Aturan umum: jika kata tersebut tidak akan diucapkan guru saat ngobrol santai dengan orangtua, jangan pakai.
+
+PRINSIP UTAMA: Tulis seperti guru yang benar-benar mengenal anak ini. Kalimat pendek, jujur, spesifik. Satu kalimat = satu fakta atau satu langkah. Hindari kata yang ditulis untuk terkesan, bukan untuk berkomunikasi.`;
 }
 
 // ── Sanitasi em-dash dari semua string dalam rows ─────────────
@@ -371,6 +507,7 @@ Untuk SETIAP baris (urutan WAJIB sama), isi 3 field:
 - solusiRumah: 1 kalimat rekomendasi konkret yang spesifik pada indikator ini.
 
 LARANGAN WAJIB (DILARANG KERAS):
+- DILARANG KERAS menyebut, mengutip, atau memparafrase teks indikator secara harfiah di deskripsiBSBBSH, deskripsiMBBB, maupun solusiRumah. Indikator diberikan sebagai KONTEKS SAJA agar kamu memahami kemampuan yang dimaksud — tulis perilaku nyata yang mencerminkannya, bukan mendefinisikan atau merujuk teks indikatornya.
 - JANGAN tulis contoh kalimat anak yang ambigu secara sosial (misal: "bersama tetangga atau saudara dari berbagai jenis kelamin") — gunakan konteks sekolah/rumah yang netral.
 - JANGAN campur kata ganti orang pertama: pilih SATU saja, "aku" ATAU "saya", konsisten dalam satu narasi. Jangan ada kalimat yang pakai keduanya sekaligus.
 - JANGAN pakai "pemahaman yang solid" → gunakan "pemahaman yang baik" atau "pemahaman yang berkembang".
