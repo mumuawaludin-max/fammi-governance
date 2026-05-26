@@ -65,49 +65,47 @@ export function Step4Preview({
   const preview = state.previewData;
   const wb = state.parsedWorkbook;
 
-  if (!preview || !wb) {
-    return <div className="text-sm text-text-secondary">Preview belum tersedia. Kembali ke langkah sebelumnya.</div>;
-  }
+  // Semua derived values harus dihitung SEBELUM early return (Rules of Hooks)
+  const narasiKarakterBase = useMemo<EditableRow[]>(() =>
+    (preview?.narasiKarakter ?? []).map((r) => ({
+      Karakter: r.karakter,
+      "Rentang Skor Indikator": r.rentangSkorIndikator,
+      Narasi: r.narasi,
+      "Nilai Awal": r.nilaiAwal,
+      "Nilai Akhir": r.nilaiAkhir,
+    })), [preview]);
 
-  const totalNarasi = preview.narasiKarakter.length + preview.narasiKeselarasan.length + preview.narasiUmum.length;
+  const narasiKeselarasanBase = useMemo<EditableRow[]>(() =>
+    (preview?.narasiKeselarasan ?? []).map((r) => ({
+      Karakter: r.karakter,
+      "Rentang Skor Indikator": r.rentangSkorIndikator,
+      "Narasi Hasil dari Sekolah": r.narasiHasilDariSekolah,
+      "Narasi Hasil dari Orangtua": r.narasiHasilDariOrangtua,
+      "Nilai Awal": r.nilaiAwal,
+      "Nilai Akhir": r.nilaiAkhir,
+      BGCOLOR: r.bgcolor,
+      TEXTCOLOR: r.textcolor,
+    })), [preview]);
 
-  // Build rows applying edits on top of base data
-  function applyEdits(baseRows: EditableRow[], tab: TabId): EditableRow[] {
-    return baseRows.map((row, i) => ({
-      ...row,
-      ...(edits[tab][i] ?? {}),
-    }));
-  }
+  const narasiUmumBase = useMemo<EditableRow[]>(() =>
+    (preview?.narasiUmum ?? []).map((r) => ({
+      "Hasil Predikat": r.hasilPredikat,
+      "Nilai Awal": r.nilaiAwal,
+      "Nilai Akhir": r.nilaiAkhir,
+      "Catatan Umum Perkembangan": r.catatanUmumPerkembangan,
+    })), [preview]);
 
-  const narasiKarakterBase: EditableRow[] = preview.narasiKarakter.map((r) => ({
-    Karakter: r.karakter,
-    "Rentang Skor Indikator": r.rentangSkorIndikator,
-    Narasi: r.narasi,
-    "Nilai Awal": r.nilaiAwal,
-    "Nilai Akhir": r.nilaiAkhir,
-  }));
+  const narasiKarakterRows = useMemo(() =>
+    narasiKarakterBase.map((row, i) => ({ ...row, ...(edits["narasi-karakter"][i] ?? {}) })),
+    [narasiKarakterBase, edits]);
 
-  const narasiKeselarasanBase: EditableRow[] = preview.narasiKeselarasan.map((r) => ({
-    Karakter: r.karakter,
-    "Rentang Skor Indikator": r.rentangSkorIndikator,
-    "Narasi Hasil dari Sekolah": r.narasiHasilDariSekolah,
-    "Narasi Hasil dari Orangtua": r.narasiHasilDariOrangtua,
-    "Nilai Awal": r.nilaiAwal,
-    "Nilai Akhir": r.nilaiAkhir,
-    BGCOLOR: r.bgcolor,
-    TEXTCOLOR: r.textcolor,
-  }));
+  const narasiKeselarasanRows = useMemo(() =>
+    narasiKeselarasanBase.map((row, i) => ({ ...row, ...(edits["narasi-keselarasan"][i] ?? {}) })),
+    [narasiKeselarasanBase, edits]);
 
-  const narasiUmumBase: EditableRow[] = preview.narasiUmum.map((r) => ({
-    "Hasil Predikat": r.hasilPredikat,
-    "Nilai Awal": r.nilaiAwal,
-    "Nilai Akhir": r.nilaiAkhir,
-    "Catatan Umum Perkembangan": r.catatanUmumPerkembangan,
-  }));
-
-  const narasiKarakterRows = applyEdits(narasiKarakterBase, "narasi-karakter");
-  const narasiKeselarasanRows = applyEdits(narasiKeselarasanBase, "narasi-keselarasan");
-  const narasiUmumRows = applyEdits(narasiUmumBase, "narasi-umum");
+  const narasiUmumRows = useMemo(() =>
+    narasiUmumBase.map((row, i) => ({ ...row, ...(edits["narasi-umum"][i] ?? {}) })),
+    [narasiUmumBase, edits]);
 
   // Derive row indices yang baru saja di-regenerate untuk visual diff
   const changedKarIndices = useMemo(() => {
@@ -131,6 +129,12 @@ export function Step4Preview({
     });
     return s;
   }, [recentChanges, narasiKeselarasanBase]);
+
+  if (!preview || !wb) {
+    return <div className="text-sm text-text-secondary">Preview belum tersedia. Kembali ke langkah sebelumnya.</div>;
+  }
+
+  const totalNarasi = preview.narasiKarakter.length + preview.narasiKeselarasan.length + preview.narasiUmum.length;
 
   function handleRowEdit(tab: TabId) {
     return (rowIndex: number, col: string, value: string) => {
