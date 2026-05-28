@@ -104,10 +104,10 @@ export default function CapaianPembelajaranPage() {
     }
 
     try {
-      const [sectionsJson, summariesJson] = await Promise.all([
-        fetchPhase<{ data: { levelSections: ICapaianLevelSection[] } }>("sections"),
-        fetchPhase<{ data: { narasiPembukaData: ICapaianPembukaRow[]; narasi100Sections: ICapaian100LevelSection[]; narasi0Sections: ICapaian0LevelSection[] } }>("summaries"),
-      ]);
+      // WAJIB SEQUENTIAL — jangan paralel. Jika keduanya hit Anthropic bersamaan,
+      // 15+ concurrent calls dari satu API key → rate limit → retry delays → 504.
+      const sectionsJson = await fetchPhase<{ data: { levelSections: ICapaianLevelSection[] } }>("sections");
+      const summariesJson = await fetchPhase<{ data: { narasiPembukaData: ICapaianPembukaRow[]; narasi100Sections: ICapaian100LevelSection[]; narasi0Sections: ICapaian0LevelSection[] } }>("summaries");
 
       const previewData: ICapaianPreviewData = {
         levelSections: sectionsJson.data.levelSections,

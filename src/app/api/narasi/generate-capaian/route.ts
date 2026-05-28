@@ -217,11 +217,8 @@ async function callWithFallback<T extends { rows: unknown[] }>(
         continue;
       }
       if (isOverloaded(err)) {
-        console.error(`[haiku] overloaded → fallback ke sonnet`);
-        return await withRetry(
-          () => callWithTool<T>(client, system, userPrompt, tool, maxTokens, MODEL_FALLBACK),
-          2,
-        );
+        console.error(`[haiku] overloaded → fallback ke sonnet (1 attempt)`);
+        return await callWithTool<T>(client, system, userPrompt, tool, maxTokens, MODEL_FALLBACK);
       }
       throw err;
     }
@@ -982,7 +979,7 @@ export async function POST(req: Request) {
     // ── Single-row regenerate mode ────────────────────────────
     if (body.regenRow) {
       const regen = body.regenRow;
-      const client = new Anthropic({ apiKey });
+      const client = new Anthropic({ apiKey, timeout: 25000 });
       const system = buildSystem(jenjang, narrativeTone);
 
       if (regen.type === "capaian") {
@@ -1028,7 +1025,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unknown regenRow type" }, { status: 400 });
     }
 
-    const client = new Anthropic({ apiKey });
+    const client = new Anthropic({ apiKey, timeout: 25000 });
     const system = buildSystem(jenjang, narrativeTone);
 
     // ── PHASE-SPLIT: "sections" only generates capaian rows per level ──
