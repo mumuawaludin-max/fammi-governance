@@ -55,7 +55,8 @@ const JENJANG_KONTEKS: Record<Jenjang, string> = {
 };
 
 const PEMBUKA_RENTANG = ["65–100", "40–64", "0–39"];
-const BATCH_SIZE = 10;
+const BATCH_SIZE = 15;
+const MAX_CONCURRENT = 3; // max concurrent Anthropic calls — 3 × ~6K input = 18K tokens, jauh di bawah 30K rate limit
 
 // ── Level pattern: menentukan pola narasi per level ───────────
 type LevelPattern = "D1" | "D2" | "D3" | "D4" | "D5" | "D6" | "KB" | "TKA" | "TKB";
@@ -888,7 +889,24 @@ Kalimat 2 — harapan pendampingan bertahap:
 Gunakan tool set_narasi_0. Output TEPAT ${workbook.elemenList.length} rows.`;
 }
 
-// ── Level section generator (batched, sequential) ────────────
+// ── Concurrency limiter ───────────────────────────────────────
+// Jalankan tasks dengan max N concurrent. Ketika satu selesai, worker berikutnya
+// langsung ambil task berikutnya — tidak ada "rounds", selalu penuh terisi.
+async function parallelLimit<T>(tasks: Array<() => Promise<T>>, limit: number): Promise<T[]> {
+  if (tasks.length === 0) return [];
+  const results = new Array<T>(tasks.length);
+  let nextIdx = 0;
+  async function worker() {
+    while (nextIdx < tasks.length) {
+      const idx = nextIdx++;
+      results[idx] = await tasks[idx]();
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, tasks.length) }, worker));
+  return results;
+}
+
+// ── Level section generator (batched, concurrency-limited) ────────────
 
 type CapaianBatchRow = {
   elemen: string;
@@ -911,15 +929,16 @@ async function generateLevelSection(
     batches.push(workbook.rows.slice(i, i + BATCH_SIZE));
   }
 
-  // Semua batch jalan PARALEL — ini yang menentukan apakah muat dalam 60s
-  const results = await Promise.all(
-    batches.map((batch, batchIdx) =>
+  // Batches jalan dengan concurrency limit — mencegah burst token yang trigger rate limit
+  const results = await parallelLimit(
+    batches.map((batch, batchIdx) => () =>
       callWithFallback<{ rows: CapaianBatchRow[] }>(
         client, system,
         promptCapaianBatch(batch, batchIdx + 1, batches.length, level, jenjang),
         toolCapaianRows, 4096,
       ),
     ),
+    MAX_CONCURRENT,
   );
 
   const outputRows: ICapaianOutputRow[] = [];
@@ -1016,34 +1035,69 @@ export async function POST(req: Request) {
     const client = new Anthropic({ apiKey, timeout: 25000, maxRetries: 0 });
     const system = buildSystem(jenjang, narrativeTone);
 
-    // ── PHASE-SPLIT: "sections" only generates capaian rows per level ──
+    // ── PHASE-SPLIT: "sections" ──────────────────────────────────
+    // Flatten ALL (level × batch) into one task list → global MAX_CONCURRENT cap.
+    // Contoh: 3 level × 3 batch = 9 tasks, max 3 concurrent = 18K input tokens/burst.
     if (body.phase === "sections") {
-      const levelSectionRows: ICapaianOutputRow[][] = await Promise.all(
-        levelList.map((level) => generateLevelSection(client, system, workbook, level, jenjang)),
+      type BatchMeta = { levelIdx: number; batch: ICapaianRow[]; batchIdx: number; totalBatches: number; level: string };
+      const taskMetas: BatchMeta[] = [];
+      for (let li = 0; li < levelList.length; li++) {
+        const level = levelList[li];
+        const batchList: ICapaianRow[][] = [];
+        for (let i = 0; i < workbook.rows.length; i += BATCH_SIZE) batchList.push(workbook.rows.slice(i, i + BATCH_SIZE));
+        for (let bi = 0; bi < batchList.length; bi++) taskMetas.push({ levelIdx: li, batch: batchList[bi], batchIdx: bi, totalBatches: batchList.length, level });
+      }
+
+      const batchResults = await parallelLimit(
+        taskMetas.map(({ batch, batchIdx, totalBatches, level }) => () =>
+          callWithFallback<{ rows: CapaianBatchRow[] }>(
+            client, system,
+            promptCapaianBatch(batch, batchIdx + 1, totalBatches, level, jenjang),
+            toolCapaianRows, 4096,
+          ),
+        ),
+        MAX_CONCURRENT,
       );
+
+      const levelOutputs: ICapaianOutputRow[][] = levelList.map(() => []);
+      for (let i = 0; i < taskMetas.length; i++) {
+        const { levelIdx, batch } = taskMetas[i];
+        for (let rowIdx = 0; rowIdx < batch.length; rowIdx++) {
+          const srcRow = batch[rowIdx];
+          const match = batchResults[i].rows[rowIdx];
+          levelOutputs[levelIdx].push({
+            elemen: srcRow.elemen,
+            tujuanPembelajaran: srcRow.tujuanPembelajaran,
+            indikator: srcRow.indikator,
+            deskripsiBSBBSH: match?.deskripsiBSBBSH ?? "(Belum dihasilkan)",
+            deskripsiMBBB: match?.deskripsiMBBB ?? "(Belum dihasilkan)",
+            solusiRumah: match?.solusiRumah ?? "(Belum dihasilkan)",
+          });
+        }
+      }
+
       const levelSections: ICapaianLevelSection[] = levelList.map((level, idx) => ({
         levelName: level === "Daycare" ? "CAPAIAN DAYCARE" : `CAPAIAN ${level.toUpperCase()}`,
         level,
-        rows: levelSectionRows[idx],
+        rows: levelOutputs[idx],
       }));
       return NextResponse.json({ data: { levelSections } });
     }
 
-    // ── PHASE-SPLIT: "summaries" only generates pembuka + narasi100 + narasi0 ──
+    // ── PHASE-SPLIT: "summaries" ─────────────────────────────────
+    // Flatten pembuka + narasi100/level + narasi0/level ke satu task list,
+    // jalankan dengan MAX_CONCURRENT global agar token burst tetap rendah.
     if (body.phase === "summaries") {
-      const [resPembuka, narasi100Results, narasi0Results] = await Promise.all([
-        callWithFallback<PembukaInput>(client, system, promptPembuka(workbook, jenjang, narrativeTone), toolPembuka, 6144),
-        Promise.all(
-          levelList.map((level) =>
-            callWithFallback<N100Input>(client, system, promptNarasi100(workbook, level, jenjang, narrativeTone), toolNarasi100, 4096),
-          ),
-        ),
-        Promise.all(
-          levelList.map((level) =>
-            callWithFallback<N0Input>(client, system, promptNarasi0(workbook, level, narrativeTone), toolNarasi0, 3072),
-          ),
-        ),
-      ]);
+      const summaryTasks: Array<() => Promise<{ rows: unknown[] }>> = [
+        () => callWithFallback<PembukaInput>(client, system, promptPembuka(workbook, jenjang, narrativeTone), toolPembuka, 4096),
+        ...levelList.map((level) => () => callWithFallback<N100Input>(client, system, promptNarasi100(workbook, level, jenjang, narrativeTone), toolNarasi100, 3072)),
+        ...levelList.map((level) => () => callWithFallback<N0Input>(client, system, promptNarasi0(workbook, level, narrativeTone), toolNarasi0, 2048)),
+      ];
+      const summaryResults = await parallelLimit(summaryTasks, MAX_CONCURRENT);
+
+      const resPembuka = summaryResults[0] as PembukaInput;
+      const narasi100Results = summaryResults.slice(1, 1 + levelList.length) as N100Input[];
+      const narasi0Results = summaryResults.slice(1 + levelList.length) as N0Input[];
 
       const narasiPembukaData: ICapaianPembukaRow[] = [];
       let pembukaIdx = 0;
@@ -1091,25 +1145,22 @@ export async function POST(req: Request) {
       return NextResponse.json({ data: { narasiPembukaData, narasi100Sections, narasi0Sections } });
     }
 
-    // ── Legacy (no phase): run both phases sequentially for backward compat ──
-    const levelSectionRows: ICapaianOutputRow[][] = await Promise.all(
-      levelList.map((level) => generateLevelSection(client, system, workbook, level, jenjang)),
+    // ── Legacy (no phase): kedua fase sequential, masing-masing dengan concurrency limit ──
+    const legacySectionRows: ICapaianOutputRow[][] = await parallelLimit(
+      levelList.map((level) => () => generateLevelSection(client, system, workbook, level, jenjang)),
+      MAX_CONCURRENT,
     );
 
-    // ── Phase 2: Pembuka + narasi100 per level + narasi0 per level — semua PARALEL ──
-    const [resPembuka, narasi100Results, narasi0Results] = await Promise.all([
-      callWithFallback<PembukaInput>(client, system, promptPembuka(workbook, jenjang, narrativeTone), toolPembuka, 6144),
-      Promise.all(
-        levelList.map((level) =>
-          callWithFallback<N100Input>(client, system, promptNarasi100(workbook, level, jenjang, narrativeTone), toolNarasi100, 4096),
-        ),
-      ),
-      Promise.all(
-        levelList.map((level) =>
-          callWithFallback<N0Input>(client, system, promptNarasi0(workbook, level, narrativeTone), toolNarasi0, 3072),
-        ),
-      ),
-    ]);
+    const legacySummaryTasks: Array<() => Promise<{ rows: unknown[] }>> = [
+      () => callWithFallback<PembukaInput>(client, system, promptPembuka(workbook, jenjang, narrativeTone), toolPembuka, 4096),
+      ...levelList.map((level) => () => callWithFallback<N100Input>(client, system, promptNarasi100(workbook, level, jenjang, narrativeTone), toolNarasi100, 3072)),
+      ...levelList.map((level) => () => callWithFallback<N0Input>(client, system, promptNarasi0(workbook, level, narrativeTone), toolNarasi0, 2048)),
+    ];
+    const legacySummaryResults = await parallelLimit(legacySummaryTasks, MAX_CONCURRENT);
+    const levelSectionRows = legacySectionRows;
+    const resPembuka = legacySummaryResults[0] as PembukaInput;
+    const narasi100Results = legacySummaryResults.slice(1, 1 + levelList.length) as N100Input[];
+    const narasi0Results = legacySummaryResults.slice(1 + levelList.length) as N0Input[];
 
     const narasi100SectionRows: ICapaian100Row[][] = narasi100Results.map((r) =>
       workbook.elemenList.map((elemen, idx) => ({
