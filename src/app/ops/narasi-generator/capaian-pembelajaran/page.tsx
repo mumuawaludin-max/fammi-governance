@@ -12,7 +12,8 @@ import { Step2UploadCapaian } from "@/components/narasi/Step2UploadCapaian";
 import { Step3ValidateCapaian } from "@/components/narasi/Step3ValidateCapaian";
 import { Step4PreviewCapaian } from "@/components/narasi/Step4PreviewCapaian";
 import { Step5ExportCapaian } from "@/components/narasi/Step5ExportCapaian";
-import type { ICapaianFormState, ICapaianPreviewData } from "@/types/narasi";
+import type { ICapaianFormState, ICapaianPreviewData, ICapaianOutputRow } from "@/types/narasi";
+import type { CellUpdateHandler } from "@/components/narasi/Step4PreviewCapaian";
 
 const INITIAL_STATE: ICapaianFormState = {
   namaSekolah: "",
@@ -76,7 +77,7 @@ export default function CapaianPembelajaranPage() {
     if (!formState.parsedWorkbook || !formState.jenjang) return;
     setIsGenerating(true);
     try {
-      const levelList = formState.jenjang === "DAYCARE" ? ["Daycare"] : formState.levelList;
+      const levelList = formState.levelList;
       const res = await fetch("/api/narasi/generate-capaian", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -117,7 +118,153 @@ export default function CapaianPembelajaranPage() {
     setFormState(INITIAL_STATE);
   }
 
-  const levelDisplay = formState.jenjang === "DAYCARE" ? ["Daycare"] : formState.levelList;
+  function baseRegenBody() {
+    return {
+      namaSekolah: formState.namaSekolah,
+      jenjang: formState.jenjang,
+      levelList: formState.levelList,
+      narrativeTone: formState.narrativeTone,
+      workbook: formState.parsedWorkbook,
+    };
+  }
+
+  const cellHandlers: CellUpdateHandler = {
+    updateCapaian(levelName, rowIdx, field, val) {
+      setFormState((prev) => {
+        if (!prev.previewData) return prev;
+        const levelSections = prev.previewData.levelSections.map((s) =>
+          s.levelName !== levelName ? s : { ...s, rows: s.rows.map((r, i) => i === rowIdx ? { ...r, [field]: val } : r) }
+        );
+        return { ...prev, previewData: { ...prev.previewData, levelSections } };
+      });
+    },
+
+    async regenCapaian(levelName, rowIdx) {
+      if (!formState.parsedWorkbook || !formState.jenjang) return;
+      const section = formState.previewData?.levelSections.find((s) => s.levelName === levelName);
+      if (!section) return;
+      const outRow = section.rows[rowIdx];
+      if (!outRow) return;
+      const res = await fetch("/api/narasi/generate-capaian", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...baseRegenBody(), regenRow: { type: "capaian", level: section.level, row: { elemen: outRow.elemen, tujuanPembelajaran: outRow.tujuanPembelajaran, indikator: outRow.indikator } } }),
+      });
+      if (!res.ok) return;
+      const json = await res.json() as { row: ICapaianOutputRow };
+      if (!json.row) return;
+      setFormState((prev) => {
+        if (!prev.previewData) return prev;
+        const levelSections = prev.previewData.levelSections.map((s) =>
+          s.levelName !== levelName ? s : {
+            ...s, rows: s.rows.map((r, i) => i === rowIdx
+              ? { ...r, deskripsiBSBBSH: json.row.deskripsiBSBBSH, deskripsiMBBB: json.row.deskripsiMBBB, solusiRumah: json.row.solusiRumah }
+              : r)
+          }
+        );
+        return { ...prev, previewData: { ...prev.previewData, levelSections } };
+      });
+    },
+
+    updatePembuka(rowIdx, field, val) {
+      setFormState((prev) => {
+        if (!prev.previewData) return prev;
+        const narasiPembukaData = prev.previewData.narasiPembukaData.map((r, i) =>
+          i === rowIdx ? { ...r, [field]: val } : r
+        );
+        return { ...prev, previewData: { ...prev.previewData, narasiPembukaData } };
+      });
+    },
+
+    async regenPembuka(rowIdx) {
+      if (!formState.parsedWorkbook || !formState.jenjang) return;
+      const row = formState.previewData?.narasiPembukaData[rowIdx];
+      if (!row) return;
+      const res = await fetch("/api/narasi/generate-capaian", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...baseRegenBody(), regenRow: { type: "pembuka", elemen: row.namaElemen, rentangSkor: row.rentangSkor } }),
+      });
+      if (!res.ok) return;
+      const json = await res.json() as { row: { kalimatPembuka: string; kalimatPenutup: string } };
+      if (!json.row) return;
+      setFormState((prev) => {
+        if (!prev.previewData) return prev;
+        const narasiPembukaData = prev.previewData.narasiPembukaData.map((r, i) =>
+          i === rowIdx ? { ...r, kalimatPembuka: json.row.kalimatPembuka, kalimatPenutup: json.row.kalimatPenutup } : r
+        );
+        return { ...prev, previewData: { ...prev.previewData, narasiPembukaData } };
+      });
+    },
+
+    update100(levelName, rowIdx, field, val) {
+      setFormState((prev) => {
+        if (!prev.previewData) return prev;
+        const narasi100Sections = prev.previewData.narasi100Sections.map((s) =>
+          s.levelName !== levelName ? s : { ...s, rows: s.rows.map((r, i) => i === rowIdx ? { ...r, [field]: val } : r) }
+        );
+        return { ...prev, previewData: { ...prev.previewData, narasi100Sections } };
+      });
+    },
+
+    async regen100(levelName, rowIdx) {
+      if (!formState.parsedWorkbook || !formState.jenjang) return;
+      const section = formState.previewData?.narasi100Sections.find((s) => s.levelName === levelName);
+      if (!section) return;
+      const row = section.rows[rowIdx];
+      if (!row) return;
+      const res = await fetch("/api/narasi/generate-capaian", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...baseRegenBody(), regenRow: { type: "narasi100", level: section.level, elemen: row.namaElemen } }),
+      });
+      if (!res.ok) return;
+      const json = await res.json() as { row: { narasiCapaian: string; ideSederhana: string } };
+      if (!json.row) return;
+      setFormState((prev) => {
+        if (!prev.previewData) return prev;
+        const narasi100Sections = prev.previewData.narasi100Sections.map((s) =>
+          s.levelName !== levelName ? s : {
+            ...s, rows: s.rows.map((r, i) => i === rowIdx ? { ...r, narasiCapaian: json.row.narasiCapaian, ideSederhana: json.row.ideSederhana } : r)
+          }
+        );
+        return { ...prev, previewData: { ...prev.previewData, narasi100Sections } };
+      });
+    },
+
+    update0(levelName, rowIdx, val) {
+      setFormState((prev) => {
+        if (!prev.previewData) return prev;
+        const narasi0Sections = prev.previewData.narasi0Sections.map((s) =>
+          s.levelName !== levelName ? s : { ...s, rows: s.rows.map((r, i) => i === rowIdx ? { ...r, halHalBaik: val } : r) }
+        );
+        return { ...prev, previewData: { ...prev.previewData, narasi0Sections } };
+      });
+    },
+
+    async regen0(levelName, rowIdx) {
+      if (!formState.parsedWorkbook || !formState.jenjang) return;
+      const section = formState.previewData?.narasi0Sections.find((s) => s.levelName === levelName);
+      if (!section) return;
+      const row = section.rows[rowIdx];
+      if (!row) return;
+      const res = await fetch("/api/narasi/generate-capaian", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...baseRegenBody(), regenRow: { type: "narasi0", level: section.level, elemen: row.elemen } }),
+      });
+      if (!res.ok) return;
+      const json = await res.json() as { row: { halHalBaik: string } };
+      if (!json.row) return;
+      setFormState((prev) => {
+        if (!prev.previewData) return prev;
+        const narasi0Sections = prev.previewData.narasi0Sections.map((s) =>
+          s.levelName !== levelName ? s : {
+            ...s, rows: s.rows.map((r, i) => i === rowIdx ? { ...r, halHalBaik: json.row.halHalBaik } : r)
+          }
+        );
+        return { ...prev, previewData: { ...prev.previewData, narasi0Sections } };
+      });
+    },
+  };
+
+  const levelDisplay = formState.levelList;
 
   return (
     <div className="flex flex-col gap-6">
@@ -205,6 +352,7 @@ export default function CapaianPembelajaranPage() {
               onApprove={handleApprove}
               onRegenerate={handleRegenerate}
               onBack={() => updateState({ step: 3 })}
+              handlers={cellHandlers}
             />
           ) : (
             <Step5ExportCapaian

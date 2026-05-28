@@ -6,8 +6,9 @@ import type {
   ICapaianOutputRow,
   ICapaianPembukaRow,
   ICapaian100Row,
-  ICapaianTKB100Row,
+  ICapaian100LevelSection,
   ICapaian0Row,
+  ICapaian0LevelSection,
   ICapaianLevelSection,
   ICapaianPreviewData,
   Jenjang,
@@ -15,15 +16,30 @@ import type {
 } from "@/types/narasi";
 import { JENJANG_LABELS } from "@/types/narasi";
 
+type RegenRowPayload =
+  | { type: "capaian"; level: string; row: ICapaianRow }
+  | { type: "pembuka"; elemen: string; rentangSkor: string }
+  | { type: "narasi100"; level: string; elemen: string }
+  | { type: "narasi0"; level: string; elemen: string };
+
 interface GenerateCapaianRequest {
   namaSekolah: string;
   jenjang: Jenjang;
   levelList: string[];
   narrativeTone: NarrativeTone;
   workbook: IParsedCapaianWorkbook;
+  regenRow?: RegenRowPayload;
 }
 
-// Primary: haiku ~3-4s per call. Fallback: sonnet kalau haiku 529 overloaded.
+// Module-level response types (used by both main handler and regenRow)
+type PembukaInput = {
+  rows: { namaElemen: string; rentangSkor: string; kalimatPembuka: string; kalimatPenutup: string }[];
+};
+type N100Input = {
+  rows: { namaElemen: string; narasiCapaian: string; ideSederhana: string }[];
+};
+type N0Input = { rows: { elemen: string; halHalBaik: string }[] };
+
 const MODEL = "claude-haiku-4-5-20251001";
 const MODEL_FALLBACK = "claude-sonnet-4-5-20250929";
 
@@ -36,17 +52,119 @@ const JENJANG_KONTEKS: Record<Jenjang, string> = {
 };
 
 const PEMBUKA_RENTANG = ["65–100", "40–64", "0–39"];
-
-// 10 baris per batch → ~2000 output token — jauh di bawah limit 8192
-// Penyebab kosong sebelumnya: 30 baris melebihi token limit → JSON terpotong → {}
 const BATCH_SIZE = 10;
+
+// ── Level pattern: menentukan pola narasi per level ───────────
+type LevelPattern = "D1" | "D2" | "D3" | "D4" | "D5" | "D6" | "KB" | "TKA" | "TKB";
+
+function getLevelPattern(level: string): LevelPattern {
+  const l = level.toUpperCase().replace(/\s+/g, "");
+  // Daycare per tahun
+  if (l === "1TAHUN" || l === "1THN" || l === "USIA1") return "D1";
+  if (l === "2TAHUN" || l === "2THN" || l === "USIA2") return "D2";
+  if (l === "3TAHUN" || l === "3THN" || l === "USIA3") return "D3";
+  if (l === "4TAHUN" || l === "4THN" || l === "USIA4") return "D4";
+  if (l === "5TAHUN" || l === "5THN" || l === "USIA5") return "D5";
+  if (l === "6TAHUN" || l === "6THN" || l === "USIA6") return "D6";
+  // TK sub-level
+  if (l.includes("TKB") || l === "B") return "TKB";
+  if (l.includes("KB") || l.includes("KELOMPOKBERMAIN")) return "KB";
+  // Daycare tanpa sub-level (fallback)
+  if (l.includes("DAYCARE")) return "D1";
+  return "TKA";
+}
+
+// Konteks usia spesifik per level
+const LEVEL_USIA_KONTEKS: Record<LevelPattern, string> = {
+  D1: "usia 1 tahun, tahap bayi akhir/toddler awal, bahasa sangat lembut, komunikasi nonverbal dominan, berbasis rasa aman dan kelekatan, stimulasi sensori dan motorik awal",
+  D2: "usia 2 tahun, toddler, mulai bicara kata-kata sederhana, eksplorasi aktif, bermain paralel, rutinitas sangat penting, emosi kuat namun regulasi belum berkembang",
+  D3: "usia 3 tahun, pra-sekolah awal, mulai bicara kalimat pendek, bermain pura-pura muncul, mulai butuh teman sebaya, aturan sederhana mulai bisa dipahami",
+  D4: "usia 4 tahun, pra-sekolah, bahasa mulai lancar, bertanya banyak, bermain imajinatif, mulai mengenal konsep sederhana seperti berbagi dan menunggu giliran",
+  D5: "usia 5 tahun, pra-sekolah lanjut, bahasa lebih terstruktur, mulai mandiri dalam kegiatan sehari-hari, senang bekerja sama, pembiasaan awal mulai konsisten",
+  D6: "usia 6 tahun, transisi ke sekolah dasar, bahasa cukup kompleks, mulai memahami aturan dan konsekuensi, siap belajar terstruktur, pembiasaan harian lebih stabil",
+  KB:  "usia 2–4 tahun, bahasa sangat sederhana, berbasis rasa aman dan rutinitas, stimulasi awal melalui bermain bebas",
+  TKA: "usia 4–5 tahun, bahasa hangat dan konkret, berbasis bermain terstruktur, pembiasaan awal, keberanian mencoba hal baru",
+  TKB: "usia 5–6 tahun, bahasa hangat dan lebih terstruktur, mulai mandiri, pembiasaan konsisten, siap transisi ke SD",
+};
+
+// Kosakata per level
+const LEVEL_VOCAB_GUARD: Record<LevelPattern, string> = {
+  D1: `DAYCARE 1 TAHUN — KOSAKATA WAJIB SANGAT DASAR:
+Bayi akhir/toddler awal. Perkembangan berbasis sensori, motorik, dan kelekatan emosional.
+DILARANG KERAS — semua kata abstrak dan kognitif tinggi:
+"memahami", "mengerti", "menyadari", "konsistensi", "tanggung jawab", "disiplin", "mandiri", "berani",
+"komunikasi", "interaksi sosial" (ganti: "bermain bersama"), "eksplorasi" (ganti: "mencoba"), "kreativitas"
+GUNAKAN: kata kerja paling dasar — merespons, menoleh, menyentuh, memegang, mencoba, mendekat, menjauh, meniru, ikut.
+POLA: sangat singkat. "Ananda mulai menunjukkan [respons konkret]." + "Proses ini membangun [rasa aman/kemampuan dasar]."`,
+
+  D2: `DAYCARE 2 TAHUN — KOSAKATA SANGAT SEDERHANA:
+Toddler aktif. Mulai bicara kata tunggal dan dua kata. Emosi kuat, regulasi belum berkembang.
+DILARANG KERAS:
+"konsistensi", "tanggung jawab", "disiplin diri", "empati", "regulasi emosi" (ganti: "mulai tenang"),
+"integritas", "refleksi", "memahami konsep", "kerja sama" (ganti: "bermain bersama")
+GUNAKAN: mau, mencoba, ikut, menyebut, menunjuk, menolak, berbagi (jika konteks konkret ada), menunggu.
+POLA 3 kalimat KB: "tampak belajar...", "Proses ini membangun..."`,
+
+  D3: `DAYCARE 3 TAHUN — KOSAKATA SEDERHANA, MULAI KALIMAT:
+Pra-sekolah awal. Mulai bicara kalimat pendek, bermain pura-pura muncul.
+DILARANG KERAS:
+"konsistensi", "integritas", "tanggung jawab" (ganti: "mau membantu"), "disiplin diri", "empati" (ganti: "peduli"),
+"regulasi emosi" (ganti: "mulai bisa tenang"), "refleksi", "komitmen", "internalisasi"
+GUNAKAN: mau mencoba, mau berbagi, mulai mengenal, ikut bermain, menyebut, menunjukkan, membantu.
+POLA 3 kalimat KB: pembuka dari situasi, "tampak belajar", "Proses ini membangun..."`,
+
+  D4: `DAYCARE 4 TAHUN — KOSAKATA KONKRET, MULAI KONSEP SEDERHANA:
+Anak sudah cukup verbal, bertanya banyak, bermain imajinatif.
+DILARANG KERAS:
+"integritas", "komitmen", "refleksi", "internalisasi", "regulasi emosi" (ganti: "mulai bisa mengatur perasaan"),
+"konsistensi" (ganti: "sudah sering"), "tanggung jawab" (ganti: "mau membereskan")
+GUNAKAN: pola "sudah mulai [kata kerja]", bahasa hangat, berbasis kebiasaan harian dan permainan.`,
+
+  D5: `DAYCARE 5 TAHUN — KOSAKATA HANGAT, MANDIRI AWAL:
+Anak mulai mandiri dalam rutinitas, pembiasaan mulai stabil.
+DILARANG KERAS:
+"integritas", "komitmen", "refleksi diri", "internalisasi", "disiplin diri",
+"konsistensi" (ganti: "sudah terbiasa"), "regulasi emosi" (ganti: "mulai bisa tenang")
+GUNAKAN: pola "sudah mulai [kata kerja]", mirip TK A. Kata seperti: mandiri (jika konteks konkret ada), mau mencoba sendiri, berani.`,
+
+  D6: `DAYCARE 6 TAHUN — KOSAKATA LEBIH MANDIRI, SIAP TRANSISI:
+Anak siap masuk SD, pembiasaan lebih stabil, mulai memahami aturan.
+DILARANG KERAS:
+"integritas", "komitmen", "refleksi mendalam", "internalisasi", "regulasi emosi"
+BOLEH (jika ada konteks perilaku konkret): mandiri, mau mengikuti aturan, konsisten, tanggung jawab sederhana.
+GUNAKAN: pola "sudah mampu [kata kerja]", mirip TK B.`,
+
+  KB: `LEVEL KB (2–4 tahun) — KOSAKATA WAJIB SANGAT SEDERHANA:
+Anak usia ini masih sangat awal dalam perkembangan bahasa dan kognitif.
+DILARANG KERAS:
+"konsistensi", "komitmen", "integritas", "refleksi", "internalisasi", "tanggung jawab",
+"disiplin diri", "kesadaran diri", "empati", "regulasi emosi", "mandiri" (ganti: "mau melakukan sendiri"),
+"berani" (ganti: "mau mencoba"), "memahami" (ganti: "mengenali" atau "mulai mengenal")
+GUNAKAN: kata kerja konkret — mau, mencoba, ikut, memperhatikan, menunggu, mendekat, memegang, menyebut.
+POLA KHAS KB: "Ananda tampak belajar...", "Proses ini membangun...", hindari kalimat panjang.`,
+
+  TKA: `LEVEL TK A (4–5 tahun) — KOSAKATA SEDERHANA DAN KONKRET:
+Anak mulai berpikir konkret, belum memahami konsep abstrak.
+DILARANG KERAS:
+"integritas", "kerendahan hati", "refleksi diri", "komitmen", "menghayati nilai", "internalisasi",
+"konsistensi" (ganti: "sudah sering" atau "sudah terbiasa"), "disiplin diri" (ganti: "mau mengikuti aturan"),
+"tanggung jawab" (ganti: "mau membereskan" atau "mau membantu"), "regulasi emosi" (ganti: "mulai bisa tenang")
+GUNAKAN: pola "sudah mulai [kata kerja]", bahasa hangat berbasis kebiasaan harian.`,
+
+  TKB: `LEVEL TK B (5–6 tahun) — KOSAKATA LEBIH MANDIRI, TETAP KONKRET:
+Anak mulai konsisten dalam perilaku, siap transisi ke SD.
+DILARANG KERAS:
+"integritas", "komitmen", "menghayati nilai", "internalisasi", "refleksi mendalam", "regulasi emosi",
+"kerendahan hati" (ganti: "mau mendengar")
+GUNAKAN: pola "sudah mampu [kata kerja]". Boleh pakai: mandiri, konsisten (jika perilaku konkret ada), berani mencoba sendiri.`,
+};
 
 /** Strip \r\n dari nama elemen multi-line Excel */
 function cleanElemen(e: string): string {
   return e.replace(/[\r\n]+/g, " ").replace(/\s{2,}/g, " ").trim();
 }
 
-// ── Retry dengan jeda flat 5s — haiku-4-5 sering 529 transient ──
+// ── Retry ────────────────────────────────────────────────────
 function isOverloaded(err: unknown): boolean {
   const status =
     err != null && typeof err === "object" && "status" in err
@@ -78,7 +196,6 @@ async function withRetry<T>(fn: () => Promise<T>, maxRetries = 4): Promise<T> {
   throw new Error("Max retries exceeded");
 }
 
-// Coba haiku dulu (cepat). Kalau 529 sampai 3x → fallback ke sonnet.
 async function callWithFallback<T extends { rows: unknown[] }>(
   client: Anthropic,
   system: string,
@@ -86,7 +203,6 @@ async function callWithFallback<T extends { rows: unknown[] }>(
   tool: Anthropic.Tool,
   maxTokens = 8192,
 ): Promise<T> {
-  // Haiku: 3 percobaan
   for (let attempt = 0; attempt <= 2; attempt++) {
     try {
       return await callWithTool<T>(client, system, userPrompt, tool, maxTokens, MODEL);
@@ -110,7 +226,6 @@ async function callWithFallback<T extends { rows: unknown[] }>(
   throw new Error("Unreachable");
 }
 
-// ── Sequential queue — satu call ke Anthropic per satu ────────
 function makeQueue() {
   let chain = Promise.resolve();
   return function enqueue<T>(fn: () => Promise<T>): Promise<T> {
@@ -122,6 +237,44 @@ function makeQueue() {
     return result;
   };
 }
+
+// ── Kosakata wajib per jenjang ────────────────────────────────
+const JENJANG_VOCAB_GUARD: Record<Jenjang, string> = {
+  DAYCARE: `JENJANG DAYCARE/KB (1-3 tahun) — KOSAKATA WAJIB SANGAT SEDERHANA:
+Anak usia ini belum memahami konsep abstrak apapun. Narasi harus berbasis tindakan yang bisa dilihat langsung.
+DILARANG KERAS — terlalu berat untuk usia ini:
+"integritas", "kerendahan hati", "refleksi", "konsistensi", "komitmen", "menghayati", "internalisasi",
+"tanggung jawab", "disiplin diri", "kesadaran diri", "nilai-nilai", "empati", "regulasi emosi",
+"mandiri" (gunakan: "mau melakukan sendiri"), "berani" (gunakan: "mau mencoba")
+GUNAKAN: kata kerja konkret — mau, mencoba, ikut, menolak, memeluk, menyentuh, memperhatikan, menunggu.`,
+
+  TK: `JENJANG TK (4-6 tahun) — KOSAKATA WAJIB SEDERHANA DAN KONKRET:
+Anak usia ini berpikir konkret, belum bisa memahami konsep abstrak atau moral filosofis.
+DILARANG KERAS:
+"integritas", "kerendahan hati", "refleksi diri", "komitmen", "menghayati nilai", "internalisasi",
+"konsistensi" (gunakan: "sudah terbiasa" atau "sudah sering"), "disiplin diri" (gunakan: "mau mengikuti aturan"),
+"kesadaran moral", "tanggung jawab" (gunakan: "mau membereskan", "mau membantu"),
+"regulasi emosi" (gunakan: "mulai bisa tenang"), "mentalitas", "introspeksi"
+GUNAKAN: bahasa seperti guru TK berbicara kepada orangtua — konkret, hangat, berbasis kebiasaan sehari-hari.`,
+
+  SD: `JENJANG SD (6-12 tahun) — KOSAKATA SESUAI USIA SEKOLAH DASAR:
+DILARANG KERAS:
+"integritas" (gunakan: "jujur"), "kerendahan hati" (gunakan: "tidak sombong" atau "mau mendengar"),
+"refleksi mendalam", "komitmen jangka panjang", "menghayati nilai-nilai", "internalisasi karakter",
+"regulasi emosi" (gunakan: "mulai bisa mengatur perasaan"), "mentalitas"
+BOLEH: tanggung jawab, jujur, disiplin, berani, mau membantu, peduli, sabar.`,
+
+  SMP: `JENJANG SMP (12-15 tahun) — KOSAKATA REFLEKTIF TAPI TIDAK TERLALU FILOSOFIS:
+DILARANG KERAS:
+"integritas" (gunakan: "kejujuran dalam bertindak"), "menghayati nilai secara mendalam",
+"komitmen sejati", "kerendahan hati yang hakiki" — terlalu filosofis
+BOLEH: refleksi, konsistensi, tanggung jawab, kepedulian, kejujuran, keberanian, empati.`,
+
+  SMA: `JENJANG SMA (15-18 tahun) — KOSAKATA DEWASA DIPERBOLEHKAN:
+Narasi boleh menggunakan kosakata yang lebih dewasa dan reflektif.
+TETAP HINDARI: frasa filosofis berlebihan, klaim spekulatif tentang masa depan.
+BOLEH: integritas, komitmen, refleksi diri, konsistensi, kemandirian, empati.`,
+};
 
 // ── System prompt ─────────────────────────────────────────────
 function buildSystem(jenjang: Jenjang, narrativeTone: NarrativeTone): string {
@@ -135,6 +288,12 @@ function buildSystem(jenjang: Jenjang, narrativeTone: NarrativeTone): string {
 WAJIB KBBI/EYD: Ananda (kapital), Ayah Bunda (kapital), insyaallah (satu kata), Alhamdulillah (satu kata). Kalimat diawali kapital, diakhiri titik.
 
 ${toneInstr}
+
+DILARANG MUTLAK — kata ini TIDAK BOLEH muncul dalam narasi dalam kondisi apapun:
+- "mantap" — DILARANG KERAS, bukan bahasa guru profesional
+- "keren", "wow", "top", "josss", "ciamik", "kece" — DILARANG KERAS
+- "luar biasa" — DILARANG KERAS, termasuk dalam frasa apapun
+- "murid" — DILARANG KERAS, selalu gunakan "ananda"
 
 TONE FAMMI WAJIB:
 - Apresiatif: hindari gagal/buruk/lemah/nakal/malas/tidak bisa/tidak mampu
@@ -258,21 +417,37 @@ Pasangan kata sifat adalah tanda tulisan tidak jujur dan terasa seperti daftar.
 - JANGAN tulis contoh kalimat anak yang ambigu secara sosial atau mengandung konteks sensitif jenis kelamin.
 
 [Q] ABSTRAKSI BERLAPIS — GANTI DENGAN PERILAKU KONKRET:
-Pola ini adalah tanda paling khas tulisan AI: menggantikan perilaku nyata dengan klaim abstrak berlapis.
-
 - JANGAN jadikan sifat/karakter sebagai subjek kalimat:
   - "Ketulusan Ananda sudah menjadi..." → tulis ulang: "Ananda membantu tanpa diminta..."
   - "Kejujuran Ananda terlihat..." → "Ananda menyampaikan dengan apa adanya..."
   Aturan: subjek kalimat harus "Ananda" atau situasi konkret, bukan nama sifatnya.
-
 - JANGAN pakai "sangat" sebagai intensifier:
   - "sangat nyata", "sangat jelas", "sangat konsisten", "sangat baik" → hapus "sangat", pilih kata yang lebih tepat.
-
 - JANGAN klaim "sudah menjadi pola/kebiasaan" tanpa fakta:
-  - "sudah menjadi pola yang nyata", "sudah tertanam dalam dirinya", "sudah menjadi bagian dari dirinya" → hapus, tulis perilaku konkretnya.
-
+  - "sudah menjadi pola yang nyata", "sudah tertanam dalam dirinya" → hapus, tulis perilaku konkretnya.
 - JANGAN pakai frase penutup filler tanpa isi:
   - "dalam kehidupan sehari-hari", "dalam aktivitas sehari-hari", "dalam keseharian Ananda" → hapus.
+
+[R] REGISTER BAHASA GURU — BUKAN BAHASA GAUL ATAU IKLAN:
+Narasi ini ditulis oleh guru profesional kepada orangtua. Bukan teman, bukan copywriter, bukan motivator.
+DILARANG KERAS — kosakata tidak pantas untuk guru:
+- "mantap", "keren", "wow", "top", "josss", "ciamik", "kece", "nggak kaleng-kaleng"
+- "luar biasa banget", "kereeeen", "amazing"
+- "yuk", "ayo dong", "coba deh" (terlalu casual)
+- "terbukti", "terbukti nyata" (klaim tanpa data)
+- Kata-kata iklan: "terdepan", "terbaik", "unggulan", "berkualitas tinggi"
+- Kata sifat bertumpuk tanpa makna: "penuh makna dan berarti", "bermakna dan berkesan"
+
+[S] PRINSIP PENULISAN MANUSIAWI (anti-AI):
+- JANGAN inflasi makna: hindari "bermakna mendalam", "menjadi tonggak", "menorehkan jejak", "mencerminkan perjalanan" — langsung ke faktanya.
+- JANGAN copula avoidance: "menjadi cerminan dari" → cukup "adalah". "Berfungsi sebagai" → "adalah".
+- JANGAN signposting: "Berikut ini akan dijelaskan..." atau "Mari kita lihat..." → langsung ke isinya.
+- JANGAN rule of three palsu: jangan paksa tiga poin jika dua sudah cukup. Daftar tiga sifat = tanda AI.
+- JANGAN passive voice tanpa pelaku: "Ananda diharapkan dapat..." → "Ayah Bunda bisa mengajak Ananda..."
+- VARIASIKAN panjang kalimat: jangan semua kalimat panjang atau semua pendek.
+
+[T] KOSAKATA WAJIB SESUAI JENJANG:
+${JENJANG_VOCAB_GUARD[jenjang]}
 
 LARANGAN SITUASI FIKTIF:
 - JANGAN mengarang situasi, konteks, media, atau aktivitas yang tidak ada secara eksplisit di teks indikator. Jika indikator tidak menyebut "bermain balok", "saat makan siang", "di halaman sekolah", maka narasi tidak boleh menyebutnya.
@@ -287,7 +462,7 @@ LARANGAN DIKSI ANEH:
 PRINSIP UTAMA: Tulis seperti guru yang benar-benar mengenal anak ini. Kalimat pendek, jujur, spesifik. Satu kalimat = satu fakta atau satu langkah. Hindari kata yang ditulis untuk terkesan, bukan untuk berkomunikasi.`;
 }
 
-// ── Sanitasi em-dash dari semua string dalam rows ─────────────
+// ── Sanitasi em-dash ──────────────────────────────────────────
 function stripEmDash(value: string): string {
   return value.replace(/ — /g, ", ").replace(/—/g, "");
 }
@@ -325,17 +500,14 @@ async function callWithTool<T extends { rows: unknown[] }>(
     | Anthropic.ToolUseBlock
     | undefined;
 
-  // Log seluruh response content untuk debug
   console.error(`[${tool.name}] stop_reason=${res.stop_reason}`);
   console.error(`[${tool.name}] content blocks:`, res.content.map((c) => c.type).join(", "));
   if (!toolBlock) {
-    // Log isi content untuk tahu kenapa tool tidak dipanggil
     console.error(`[${tool.name}] NO TOOL BLOCK — raw content:`, JSON.stringify(res.content).slice(0, 500));
     throw new Error(`Tool ${tool.name} tidak dipanggil oleh model`);
   }
 
   const input = toolBlock.input as Record<string, unknown>;
-  // Log raw input structure untuk debug field name issues
   console.error(`[${tool.name}] raw input keys:`, Object.keys(input));
   console.error(`[${tool.name}] raw input sample:`, JSON.stringify(input).slice(0, 800));
 
@@ -374,9 +546,9 @@ const toolCapaianRows: Anthropic.Tool = {
             elemen: { type: "string" },
             tujuanPembelajaran: { type: "string" },
             indikator: { type: "string" },
-            deskripsiBSBBSH: { type: "string", description: "Narasi 2 kalimat untuk anak BSB/BSH" },
-            deskripsiMBBB: { type: "string", description: "Narasi 2 kalimat untuk anak MB/BB (hangat)" },
-            solusiRumah: { type: "string", description: "1 kalimat solusi konkret di rumah" },
+            deskripsiBSBBSH: { type: "string", description: "Narasi untuk anak BSB/BSH sesuai pola level" },
+            deskripsiMBBB: { type: "string", description: "Narasi untuk anak MB/BB — hangat, berbasis kesiapan" },
+            solusiRumah: { type: "string", description: "Rekomendasi konkret di rumah" },
           },
           required: ["elemen", "indikator", "deskripsiBSBBSH", "deskripsiMBBB", "solusiRumah"],
         },
@@ -422,8 +594,8 @@ const toolNarasi100: Anthropic.Tool = {
           type: "object",
           properties: {
             namaElemen: { type: "string" },
-            narasiCapaian: { type: "string", description: "Narasi pencapaian optimal (kolom: Ganti dilatih pelan-pelan jadi)" },
-            ideSederhana: { type: "string", description: "Ide mempertahankan capaian di rumah (kolom: Ide sederhana di rumah)" },
+            narasiCapaian: { type: "string", description: "Narasi pencapaian optimal — seluruh indikator berkembang sesuai tahap" },
+            ideSederhana: { type: "string", description: "Ide mempertahankan capaian di rumah — bukan remedial" },
           },
           required: ["namaElemen", "narasiCapaian", "ideSederhana"],
         },
@@ -433,28 +605,6 @@ const toolNarasi100: Anthropic.Tool = {
   },
 };
 
-const toolNarasiTKB100: Anthropic.Tool = {
-  name: "set_narasi_tkb100",
-  description: "Simpan narasi CAPAIAN TK B 100%",
-  input_schema: {
-    type: "object" as const,
-    properties: {
-      rows: {
-        type: "array",
-        items: {
-          type: "object",
-          properties: {
-            namaElemen: { type: "string" },
-            perluDilatih: { type: "string", description: "Narasi pencapaian penuh TK B (kolom: Perlu dilatih pelan2)" },
-            fokusEndampingan: { type: "string", description: "Fokus pendampingan (kolom: Fokus pendampingan)" },
-          },
-          required: ["namaElemen", "perluDilatih", "fokusEndampingan"],
-        },
-      },
-    },
-    required: ["rows"],
-  },
-};
 
 const toolNarasi0: Anthropic.Tool = {
   name: "set_narasi_0",
@@ -478,6 +628,66 @@ const toolNarasi0: Anthropic.Tool = {
   },
 };
 
+// ── Pola narasi per level ─────────────────────────────────────
+
+function getPolaInstruksi(pattern: LevelPattern): string {
+  // D5 dan D6 pakai pola yang lebih mandiri (mirip TKA/TKB)
+  if (pattern === "D6") return getPolaInstruksi("TKB");
+  if (pattern === "D5") return getPolaInstruksi("TKA");
+  // D1–D4 dan KB pakai pola 3 kalimat berbasis observasi
+  if (pattern === "D1" || pattern === "D2" || pattern === "D3" || pattern === "D4") {
+    return getPolaInstruksi("KB");
+  }
+
+  if (pattern === "TKA") {
+    return `POLA NARASI WAJIB — TK A:
+
+deskripsiBSBBSH — 2 kalimat:
+- Kalimat 1: "Ananda sudah mulai [kata kerja konkret] [detail spesifik]."
+- Kalimat 2: dampak positif atau observasi kelanjutan perilaku.
+
+deskripsiMBBB — 2 kalimat WAJIB, urutan tidak boleh dibalik:
+- Kalimat 1: "Ananda menunjukkan kesiapan [awal] dengan [hal positif konkret yang sudah terlihat]."
+- Kalimat 2: "Ananda masih memerlukan [pendampingan/bimbingan/arahan/dorongan] agar [capaian ke depan]."
+LARANGAN: kalimat 1 DILARANG dimulai dengan "Ananda masih..." — wajib dimulai dari kesiapan positif.
+
+solusiRumah — 1 kalimat: "Untuk [tujuan konkret], Ayah dan Bunda dapat [aksi spesifik]."`;
+  }
+
+  if (pattern === "TKB") {
+    return `POLA NARASI WAJIB — TK B:
+
+deskripsiBSBBSH — 2 kalimat (lebih mandiri dari TK A, gunakan "sudah mampu"):
+- Kalimat 1: "Ananda sudah mampu [kata kerja] [detail spesifik]."
+- Kalimat 2: observasi kualitas, konsistensi, atau inisiatif.
+
+deskripsiMBBB — 2 kalimat WAJIB:
+- Kalimat 1: "Ananda menunjukkan kesiapan dengan [hal positif yang sudah terlihat]."
+- Kalimat 2: "Ananda masih memerlukan penguatan agar [capaian ke depan]."
+LARANGAN: kalimat 1 DILARANG dimulai "Ananda masih..." — wajib dari kesiapan positif.
+
+solusiRumah — 1 kalimat: "Untuk [tujuan], Ayah dan Bunda dapat [aksi konkret]."`;
+  }
+
+  // KB / Daycare
+  return `POLA NARASI WAJIB — KB/Daycare (usia lebih muda, 3 kalimat):
+
+deskripsiBSBBSH — 3 kalimat:
+- Kalimat 1: "Ananda sudah mulai [aksi] dengan [cara/konteks]." atau "Ananda tampak [perilaku positif] saat [situasi]."
+- Kalimat 2: observasi lanjutan — awali dengan variasi seperti "Ananda tampak...", "Ia berusaha...", atau dari situasi.
+- Kalimat 3: "Proses ini [mendukung/membangun/membantu] [tujuan perkembangan konkret]."
+
+deskripsiMBBB — 3 kalimat WAJIB:
+- Kalimat 1: "Ananda sudah mulai [tanda positif awal] meski [limitasi — gunakan kata 'meski', bukan 'namun']."
+- Kalimat 2: "Ananda tampak belajar [melalui.../mengenali...]."
+- Kalimat 3: "Proses ini [membuka/mendukung/membangun] fondasi [tujuan perkembangan] berikutnya."
+LARANGAN: kalimat 1 DILARANG dimulai dari kekurangan. Wajib ada hal positif yang sudah muncul.
+
+solusiRumah — 2 kalimat:
+- Kalimat 1: "Untuk [tujuan], Ayah dan Bunda dapat [aksi konkret]."
+- Kalimat 2: satu langkah tambahan atau cara pelaksanaannya yang singkat.`;
+}
+
 // ── Prompt builders ───────────────────────────────────────────
 
 function promptCapaianBatch(
@@ -488,6 +698,9 @@ function promptCapaianBatch(
   jenjang: Jenjang,
 ): string {
   const jenjangLabel = JENJANG_LABELS[jenjang];
+  const pattern = getLevelPattern(level);
+  const usiaKonteks = LEVEL_USIA_KONTEKS[pattern];
+  const vocabGuard = LEVEL_VOCAB_GUARD[pattern];
   const lines = batch
     .map(
       (r, i) =>
@@ -496,23 +709,25 @@ function promptCapaianBatch(
     .join("\n");
 
   return `Buat narasi capaian pembelajaran untuk level ${level} (${jenjangLabel}).
+KONTEKS USIA: ${usiaKonteks}
 Batch ${batchNum} dari ${totalBatches} — ${batch.length} indikator.
 
 INDIKATOR:
 ${lines}
 
-Untuk SETIAP baris (urutan WAJIB sama), isi 3 field:
-- deskripsiBSBBSH: 2 kalimat untuk anak Berkembang Sangat Baik/Sesuai Harapan. Kalimat 1: pencapaian spesifik. Kalimat 2: dampak positif.
-- deskripsiMBBB: 2 kalimat untuk anak Masih/Belum Berkembang (hangat). Kalimat 1: gambaran positif kesiapan. Kalimat 2: harapan pendampingan.
-- solusiRumah: 1 kalimat rekomendasi konkret yang spesifik pada indikator ini.
+KOSAKATA WAJIB UNTUK LEVEL INI:
+${vocabGuard}
 
-LARANGAN WAJIB (DILARANG KERAS):
-- DILARANG KERAS menyebut, mengutip, atau memparafrase teks indikator secara harfiah di deskripsiBSBBSH, deskripsiMBBB, maupun solusiRumah. Indikator diberikan sebagai KONTEKS SAJA agar kamu memahami kemampuan yang dimaksud — tulis perilaku nyata yang mencerminkannya, bukan mendefinisikan atau merujuk teks indikatornya.
+${getPolaInstruksi(pattern)}
+
+LARANGAN WAJIB:
+- DILARANG KERAS menyebut, mengutip, atau memparafrase teks indikator secara harfiah. Indikator diberikan sebagai KONTEKS SAJA — tulis perilaku nyata yang mencerminkannya, bukan mendefinisikan atau merujuk teks indikatornya.
 - JANGAN tulis contoh kalimat anak yang ambigu secara sosial (misal: "bersama tetangga atau saudara dari berbagai jenis kelamin") — gunakan konteks sekolah/rumah yang netral.
-- JANGAN campur kata ganti orang pertama: pilih SATU saja, "aku" ATAU "saya", konsisten dalam satu narasi. Jangan ada kalimat yang pakai keduanya sekaligus.
+- JANGAN campur kata ganti orang pertama: pilih SATU saja, "aku" ATAU "saya", konsisten dalam satu narasi.
 - JANGAN pakai "pemahaman yang solid" → gunakan "pemahaman yang baik" atau "pemahaman yang berkembang".
+- JANGAN pakai "murid" → selalu gunakan "ananda".
 
-Gunakan tool set_capaian_rows. Output TEPAT ${batch.length} rows.`;
+Gunakan tool set_capaian_rows. Output TEPAT ${batch.length} rows, urutan WAJIB sama dengan daftar indikator di atas.`;
 }
 
 function promptPembuka(
@@ -522,7 +737,7 @@ function promptPembuka(
 ): string {
   const toneNote =
     tone === "islami"
-      ? "Boleh pakai Alhamdulillah, insyaallah, Aamiin secara natural."
+      ? `Tone islami: pembuka boleh pakai "Alhamdulillah". Penutup 65–100 dan 40–64: "Semoga Allah...". Penutup 0–39: "Kami berharap Allah...".`
       : "JANGAN pakai frasa religius apapun.";
   const jenjangLabel = JENJANG_LABELS[jenjang];
   const elemenClean = workbook.elemenList.map(cleanElemen);
@@ -536,11 +751,18 @@ RENTANG SKOR (rentangSkor harus PERSIS): 65–100 | 40–64 | 0–39
 ${toneNote}
 
 Untuk setiap elemen × rentang (${elemenClean.length} × 3 = ${elemenClean.length * 3} baris):
-- kalimatPembuka: 2 kalimat pembuka, sebut nama elemen, sesuaikan dengan rentang.
-- kalimatPenutup: 1 kalimat penutup/harapan.
 
-Panduan: 65–100 = apresiasi kuat | 40–64 = apresiasi + dorongan | 0–39 = sangat hangat, tidak menstigma.
-Urutan: tiap elemen berurutan, tiap elemen 3 baris (65–100 dulu, lalu 40–64, lalu 0–39).
+kalimatPembuka — 2 kalimat, sebut nama elemen, sesuaikan dengan rentang skor:
+- 65–100: apresiasi kuat, "tampak", "menunjukkan perkembangan yang baik"
+- 40–64: apresiasi + dorongan, "mulai menunjukkan", "dengan bimbingan"
+- 0–39: sangat hangat, "masih membutuhkan pendampingan", tidak menstigma, tidak menyebut kekurangan
+
+kalimatPenutup — 1 kalimat harapan atau dorongan WAJIB BERFOKUS PADA ANANDA:
+- POLA WAJIB: "Semoga Ananda terus [berkembang/bertumbuh]..." atau "Dengan pendampingan yang konsisten, Ananda akan [perkembangan konkret]..."
+- DILARANG KERAS: "Semoga Ayah Bunda diberikan...", "Kami mendoakan Ayah Bunda...", "Semoga Allah memudahkan Ayah Bunda..." — kalimat penutup adalah tentang perkembangan ANAK, bukan tentang orang tua.
+- Islami (jika tone islami): "Semoga Ananda terus berkembang, insyaallah." atau "Semoga Allah mudahkan tumbuh kembang Ananda." — tetap fokus pada Ananda.
+
+Urutan output: tiap elemen berurutan, tiap elemen 3 baris (65–100 dulu, lalu 40–64, lalu 0–39).
 
 Gunakan tool set_narasi_pembuka. Total TEPAT ${elemenClean.length * 3} rows.`;
 }
@@ -560,45 +782,40 @@ function promptNarasi100(
     .map((e, i) => `${i + 1}. ${cleanElemen(e)} (${workbook.indikatorPerElemen[e] ?? 0} indikator)`)
     .join("\n");
 
+  const pattern = getLevelPattern(level);
+  const usiaKonteks = LEVEL_USIA_KONTEKS[pattern];
+  const vocabGuard = LEVEL_VOCAB_GUARD[pattern];
+
   return `Buat NARASI 100% TERCAPAI untuk ${jenjangLabel} level ${level}.
+KONTEKS USIA: ${usiaKonteks}
 ${toneNote}
 
 ELEMEN:
 ${elemenInfo}
 
+KOSAKATA WAJIB UNTUK LEVEL INI:
+${vocabGuard}
+
 Untuk setiap elemen, isi 2 field:
-- narasiCapaian: 2-3 kalimat, seluruh indikator tercapai optimal. Sebutkan nama elemen dan jumlah indikator. Apresiasi kuat.
-- ideSederhana: 2 kalimat rekomendasi MEMPERTAHANKAN capaian di rumah (bukan remedial). JANGAN pakai "dilatih pelan-pelan".
+
+narasiCapaian — 2-3 kalimat, seluruh indikator berkembang optimal:
+- Pembuka WAJIB bervariasi antara: "Berdasarkan pengamatan yang dilakukan secara berkelanjutan, seluruh indikator..." / "Hasil pengamatan menunjukkan bahwa seluruh indikator..." / "Berdasarkan hasil pemantauan, seluruh indikator..."
+- Menyebut nama elemen dan jumlah indikator.
+- Bahasa formal dan afirmatif, tapi tidak bombastis. JANGAN pakai "luar biasa", "gemilang", "fondasi yang kokoh".
+
+ideSederhana — 2 kalimat rekomendasi MEMPERTAHANKAN capaian di rumah (bukan remedial):
+- Pembuka WAJIB bervariasi: "Pada tahap perkembangan ini, fokus pendampingan diarahkan pada..." / "Pendampingan pada tahap ini difokuskan pada..." / "Pada tahap ini, pendampingan difokuskan pada..."
+- Ayah Bunda sebagai mitra aktif, satu aksi konkret.
+- JANGAN pakai "dikuatkan secara bertahap" atau "dilatih pelan-pelan" atau variannya.
 
 LARANGAN:
-- JANGAN tulis "pemahaman yang solid" → gunakan "pemahaman yang baik", "pemahaman yang berkembang", atau "pemahaman yang menguat".
-- JANGAN campur kata ganti: pilih "aku" atau "saya", konsisten dalam satu narasi.
+- JANGAN tulis "pemahaman yang solid" → gunakan "pemahaman yang baik" atau "pemahaman yang berkembang".
+- JANGAN campur kata ganti: pilih "aku" atau "saya", konsisten.
+- JANGAN pakai "murid" → selalu "ananda".
 
 Gunakan tool set_narasi_100. Output TEPAT ${workbook.elemenList.length} rows.`;
 }
 
-function promptNarasiTKB100(
-  workbook: IParsedCapaianWorkbook,
-  tone: NarrativeTone,
-): string {
-  const toneNote =
-    tone === "islami" ? "Boleh pakai frasa Islami secara natural." : "JANGAN pakai frasa religius.";
-  const elemenInfo = workbook.elemenList
-    .map((e, i) => `${i + 1}. ${cleanElemen(e)} (${workbook.indikatorPerElemen[e] ?? 0} indikator)`)
-    .join("\n");
-
-  return `Buat NARASI CAPAIAN TK B 100%.
-${toneNote}
-
-ELEMEN:
-${elemenInfo}
-
-Untuk setiap elemen, isi 2 field:
-- perluDilatih: 2-3 kalimat, seluruh indikator TK B tercapai. Apresiasi kuat.
-- fokusEndampingan: 2 kalimat fokus pendampingan mempertahankan capaian. Ayah Bunda sebagai mitra. JANGAN pakai "dilatih pelan-pelan".
-
-Gunakan tool set_narasi_tkb100. Output TEPAT ${workbook.elemenList.length} rows.`;
-}
 
 function promptNarasi0(
   workbook: IParsedCapaianWorkbook,
@@ -606,24 +823,37 @@ function promptNarasi0(
   tone: NarrativeTone,
 ): string {
   const toneNote =
-    tone === "islami" ? "Boleh tambah harapan Islami." : "JANGAN pakai frasa religius.";
+    tone === "islami" ? "Boleh tambah harapan Islami, gunakan 'Kami berharap Allah...'." : "JANGAN pakai frasa religius.";
   const elemenInfo = workbook.elemenList
     .map((e, i) => `${i + 1}. ${cleanElemen(e)} (${workbook.indikatorPerElemen[e] ?? 0} indikator)`)
     .join("\n");
 
+  const patternZ = getLevelPattern(level);
+  const usiaKonteksZ = LEVEL_USIA_KONTEKS[patternZ];
+  const vocabGuardZ = LEVEL_VOCAB_GUARD[patternZ];
+
   return `Buat NARASI SEMUA 0% untuk level ${level}.
+KONTEKS USIA: ${usiaKonteksZ}
 ${toneNote}
+
+KOSAKATA WAJIB UNTUK LEVEL INI:
+${vocabGuardZ}
 
 ELEMEN:
 ${elemenInfo}
 
-Untuk setiap elemen, field halHalBaik berisi 2 kalimat hangat:
-- Kalimat 1: framing positif sebagai awal perjalanan belajar. JANGAN tulis "ananda menghadapi X indikator yang kaya..." — gunakan pola seperti "Ananda mulai mengenali berbagai kegiatan yang berkaitan dengan [nama elemen]..." atau "Perjalanan Ananda dalam [nama elemen] baru saja dimulai...".
-- Kalimat 2: harapan pendampingan bertahap bersama Ayah Bunda.
+Untuk setiap elemen, field halHalBaik berisi 2 kalimat hangat dengan POLA WAJIB:
 
-LARANGAN:
-- JANGAN tulis "menghadapi X indikator" — hindari framing beban/tantangan.
-- JANGAN tulis "indikator yang kaya" — terlalu formal dan terasa seperti laporan teknis.
+Kalimat 1 — WAJIB dimulai dari KONTEKS SITUASI, bukan langsung "Ananda":
+- Pola: "[Konteks situasi/kegiatan], ananda masih berada pada tahap awal [nama domain/elemen]."
+- Contoh konteks: "Dalam keseharian di sekolah,", "Selama kegiatan berlangsung,", "Pada aktivitas [elemen] sehari-hari,", "Dalam proses bermain dan belajar,"
+- DILARANG: "ananda menghadapi X indikator" — hindari framing beban.
+- DILARANG: "indikator yang kaya" — terlalu formal.
+- DILARANG: dimulai langsung dengan "Ananda..." — wajib konteks situasi dulu.
+
+Kalimat 2 — harapan pendampingan bertahap:
+- Fokus pada satu tanda positif awal yang sudah terlihat, atau harapan pendampingan bersama Ayah Bunda.
+- Boleh gunakan pola: "Ananda mulai menunjukkan [tanda awal positif]." atau "Dengan pendampingan Ayah Bunda, ananda akan perlahan [tujuan perkembangan]."
 
 Gunakan tool set_narasi_0. Output TEPAT ${workbook.elemenList.length} rows.`;
 }
@@ -701,55 +931,105 @@ export async function POST(req: Request) {
       );
     }
 
+    // ── Single-row regenerate mode ────────────────────────────
+    if (body.regenRow) {
+      const regen = body.regenRow;
+      const client = new Anthropic({ apiKey });
+      const system = buildSystem(jenjang, narrativeTone);
+      const enqueue = makeQueue();
+
+      if (regen.type === "capaian") {
+        const singleWorkbook: IParsedCapaianWorkbook = { ...workbook, rows: [regen.row] };
+        const [regenerated] = await generateLevelSection(client, system, singleWorkbook, regen.level, jenjang, enqueue);
+        return NextResponse.json({ row: regenerated });
+      }
+
+      if (regen.type === "pembuka") {
+        const indikatorCount = workbook.indikatorPerElemen[regen.elemen] ?? 0;
+        const singleWorkbook: IParsedCapaianWorkbook = {
+          ...workbook,
+          elemenList: [regen.elemen],
+          indikatorPerElemen: { [regen.elemen]: indikatorCount },
+        };
+        const result = await enqueue(() =>
+          callWithFallback<PembukaInput>(client, system, promptPembuka(singleWorkbook, jenjang, narrativeTone), toolPembuka, 2048),
+        );
+        const row = result.rows.find((r) => r.rentangSkor === regen.rentangSkor) ?? result.rows[0];
+        return NextResponse.json({ row });
+      }
+
+      if (regen.type === "narasi100") {
+        const indikatorCount = workbook.indikatorPerElemen[regen.elemen] ?? 0;
+        const singleWorkbook: IParsedCapaianWorkbook = {
+          ...workbook,
+          elemenList: [regen.elemen],
+          indikatorPerElemen: { [regen.elemen]: indikatorCount },
+        };
+        const result = await enqueue(() =>
+          callWithFallback<N100Input>(client, system, promptNarasi100(singleWorkbook, regen.level, jenjang, narrativeTone), toolNarasi100, 2048),
+        );
+        return NextResponse.json({ row: result.rows[0] });
+      }
+
+      if (regen.type === "narasi0") {
+        const indikatorCount = workbook.indikatorPerElemen[regen.elemen] ?? 0;
+        const singleWorkbook: IParsedCapaianWorkbook = {
+          ...workbook,
+          elemenList: [regen.elemen],
+          indikatorPerElemen: { [regen.elemen]: indikatorCount },
+        };
+        const result = await enqueue(() =>
+          callWithFallback<N0Input>(client, system, promptNarasi0(singleWorkbook, regen.level, narrativeTone), toolNarasi0, 2048),
+        );
+        return NextResponse.json({ row: result.rows[0] });
+      }
+
+      return NextResponse.json({ error: "Unknown regenRow type" }, { status: 400 });
+    }
+
     const client = new Anthropic({ apiKey });
     const system = buildSystem(jenjang, narrativeTone);
-    const hasTKB = levelList.includes("TK B");
-    const representativeLevel = levelList[0] ?? "Umum";
 
-    // Satu antrian sequential — tidak ada concurrent call ke Anthropic
     const enqueue = makeQueue();
 
-    type PembukaInput = {
-      rows: {
-        namaElemen: string;
-        rentangSkor: string;
-        kalimatPembuka: string;
-        kalimatPenutup: string;
-      }[];
-    };
-    type N100Input = {
-      rows: { namaElemen: string; narasiCapaian: string; ideSederhana: string }[];
-    };
-    type NTKB100Input = {
-      rows: { namaElemen: string; perluDilatih: string; fokusEndampingan: string }[];
-    };
-    type N0Input = { rows: { elemen: string; halHalBaik: string }[] };
-
-    // Generate level sections secara sequential (tiap level, tiap batch satu per satu)
     const levelSectionRows: ICapaianOutputRow[][] = [];
     for (const level of levelList) {
       const rows = await generateLevelSection(client, system, workbook, level, jenjang, enqueue);
       levelSectionRows.push(rows);
     }
 
-    // Generate shared sections — sequential via antrian yang sama
     const resPembuka = await enqueue(() =>
       callWithFallback<PembukaInput>(client, system, promptPembuka(workbook, jenjang, narrativeTone), toolPembuka, 8192),
     );
 
-    const res100 = await enqueue(() =>
-      callWithFallback<N100Input>(client, system, promptNarasi100(workbook, representativeLevel, jenjang, narrativeTone), toolNarasi100, 8192),
-    );
+    const narasi100SectionRows: ICapaian100Row[][] = [];
+    for (const level of levelList) {
+      const r = await enqueue(() =>
+        callWithFallback<N100Input>(client, system, promptNarasi100(workbook, level, jenjang, narrativeTone), toolNarasi100, 8192),
+      );
+      narasi100SectionRows.push(
+        workbook.elemenList.map((elemen, idx) => ({
+          namaElemen: cleanElemen(elemen),
+          narasiCapaian: r.rows[idx]?.narasiCapaian ?? "(Belum dihasilkan)",
+          ideSederhana: r.rows[idx]?.ideSederhana ?? "(Belum dihasilkan)",
+        })),
+      );
+    }
 
-    const res0 = await enqueue(() =>
-      callWithFallback<N0Input>(client, system, promptNarasi0(workbook, representativeLevel, narrativeTone), toolNarasi0, 8192),
-    );
-
-    const resTKB100 = hasTKB
-      ? await enqueue(() =>
-          callWithFallback<NTKB100Input>(client, system, promptNarasiTKB100(workbook, narrativeTone), toolNarasiTKB100, 8192),
-        )
-      : { rows: [] as NTKB100Input["rows"] };
+    const narasi0SectionRows: ICapaian0Row[][] = [];
+    for (const level of levelList) {
+      const r = await enqueue(() =>
+        callWithFallback<N0Input>(client, system, promptNarasi0(workbook, level, narrativeTone), toolNarasi0, 8192),
+      );
+      narasi0SectionRows.push(
+        workbook.elemenList.map((elemen, idx) => ({
+          elemen: cleanElemen(elemen),
+          total: `${workbook.indikatorPerElemen[elemen] ?? 0} indikator`,
+          masih: "Masih perlu penguatan",
+          halHalBaik: r.rows[idx]?.halHalBaik ?? "(Belum dihasilkan)",
+        })),
+      );
+    }
 
     // ── Assemble output ───────────────────────────────────────
 
@@ -759,7 +1039,6 @@ export async function POST(req: Request) {
       rows: levelSectionRows[idx],
     }));
 
-    // Pembuka — index-based (urutan elemen × rentang sesuai prompt)
     const narasiPembukaData: ICapaianPembukaRow[] = [];
     let pembukaIdx = 0;
     for (const elemen of workbook.elemenList) {
@@ -774,37 +1053,23 @@ export async function POST(req: Request) {
       }
     }
 
-    // 100% — index-based
-    const narasi100Data: ICapaian100Row[] = workbook.elemenList.map((elemen, idx) => ({
-      namaElemen: cleanElemen(elemen),
-      narasiCapaian: res100.rows[idx]?.narasiCapaian ?? "(Belum dihasilkan)",
-      ideSederhana: res100.rows[idx]?.ideSederhana ?? "(Belum dihasilkan)",
+    const narasi100Sections: ICapaian100LevelSection[] = levelList.map((level, idx) => ({
+      levelName: `NARASI 100% ${level.toUpperCase()}`,
+      level,
+      rows: narasi100SectionRows[idx],
     }));
 
-    // TKB100 — index-based, kondisional
-    let narasiTKB100Data: ICapaianTKB100Row[] | undefined;
-    if (hasTKB) {
-      narasiTKB100Data = workbook.elemenList.map((elemen, idx) => ({
-        namaElemen: cleanElemen(elemen),
-        perluDilatih: resTKB100.rows[idx]?.perluDilatih ?? "(Belum dihasilkan)",
-        fokusEndampingan: resTKB100.rows[idx]?.fokusEndampingan ?? "(Belum dihasilkan)",
-      }));
-    }
-
-    // 0% — index-based
-    const narasi0Data: ICapaian0Row[] = workbook.elemenList.map((elemen, idx) => ({
-      elemen: cleanElemen(elemen),
-      total: `${workbook.indikatorPerElemen[elemen] ?? 0} indikator`,
-      masih: "Masih perlu penguatan",
-      halHalBaik: res0.rows[idx]?.halHalBaik ?? "(Belum dihasilkan)",
+    const narasi0Sections: ICapaian0LevelSection[] = levelList.map((level, idx) => ({
+      levelName: `NARASI 0% ${level.toUpperCase()}`,
+      level,
+      rows: narasi0SectionRows[idx],
     }));
 
     const previewData: ICapaianPreviewData = {
       levelSections,
       narasiPembukaData,
-      narasi100Data,
-      narasiTKB100Data,
-      narasi0Data,
+      narasi100Sections,
+      narasi0Sections,
     };
 
     const jenjangLabel = JENJANG_LABELS[jenjang];
@@ -812,18 +1077,17 @@ export async function POST(req: Request) {
     const levelSlug = levelList.join("-").replace(/\s+/g, "");
     const namaFile = `Narasi_Capaian_${sekolahSlug}_${jenjangLabel}_${levelSlug}_${new Date().toISOString().slice(0, 10)}.xlsx`;
 
-    // Debug info — bantu diagnose field names dari Claude
     const _debug = {
       levelRowCounts: levelSectionRows.map((rows, i) => ({
         level: levelList[i],
+        pattern: getLevelPattern(levelList[i]),
         total: rows.length,
         filledBSB: rows.filter((r) => r.deskripsiBSBBSH && r.deskripsiBSBBSH !== "(Belum dihasilkan)").length,
-        sampleFirstRowKeys: rows[0] ? Object.keys(rows[0]) : [],
         sampleBSB: rows[0]?.deskripsiBSBBSH?.slice(0, 80) ?? "EMPTY",
       })),
-      pembuka: { total: resPembuka.rows.length, sampleKeys: resPembuka.rows[0] ? Object.keys(resPembuka.rows[0]) : [] },
-      n100: { total: res100.rows.length, sample: res100.rows[0] ? JSON.stringify(res100.rows[0]).slice(0, 200) : "EMPTY" },
-      n0: { total: res0.rows.length, sample: res0.rows[0] ? JSON.stringify(res0.rows[0]).slice(0, 200) : "EMPTY" },
+      pembuka: { total: resPembuka.rows.length },
+      narasi100: narasi100Sections.map((s) => ({ level: s.level, rows: s.rows.length })),
+      narasi0: narasi0Sections.map((s) => ({ level: s.level, rows: s.rows.length })),
     };
     console.error("[generate-capaian] _debug:", JSON.stringify(_debug, null, 2));
 

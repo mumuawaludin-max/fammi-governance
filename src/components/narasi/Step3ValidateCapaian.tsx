@@ -63,7 +63,7 @@ export function Step3ValidateCapaian({ state, onNext, onBack }: Step3ValidateCap
     {
       label: "Level / kelas dipilih",
       status:
-        state.jenjang === "DAYCARE" || state.levelList.length > 0
+        state.levelList.length > 0
           ? "ok"
           : "error",
     },
@@ -193,7 +193,7 @@ export function Step3ValidateCapaian({ state, onNext, onBack }: Step3ValidateCap
           <div className="flex flex-col gap-0.5">
             <p className="text-xs font-semibold text-text-primary">Yang akan dihasilkan:</p>
             <ul className="text-xs text-text-secondary space-y-0.5 list-disc list-inside">
-              {(state.jenjang === "DAYCARE" ? ["Daycare"] : state.levelList).map((lv) => (
+              {state.levelList.map((lv) => (
                 <li key={lv}>Section CAPAIAN {lv.toUpperCase()}</li>
               ))}
               <li>Section NARASI PEMBUKA PENUTUP</li>

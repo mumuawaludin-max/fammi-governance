@@ -4,7 +4,6 @@ import type {
   ICapaianOutputRow,
   ICapaianPembukaRow,
   ICapaian100Row,
-  ICapaianTKB100Row,
   ICapaian0Row,
   NarrativeTone,
 } from "@/types/narasi";
@@ -42,19 +41,12 @@ function pembukaRowsToExport(rows: ICapaianPembukaRow[]): Record<string, string>
 
 function narasi100RowsToExport(rows: ICapaian100Row[]): Record<string, string>[] {
   return rows.map((r) => ({
-    Name: r.namaElemen,
-    "Ganti dilatih pelan-pelan jadi:": r.narasiCapaian,
-    "Ide sederhana di rumah:": r.ideSederhana,
+    Elemen: r.namaElemen,
+    "Narasi Capaian Optimal": r.narasiCapaian,
+    "Ide Pendampingan di Rumah": r.ideSederhana,
   }));
 }
 
-function narasiTKB100RowsToExport(rows: ICapaianTKB100Row[]): Record<string, string>[] {
-  return rows.map((r) => ({
-    Name: r.namaElemen,
-    "Perlu dilatih pelan2": r.perluDilatih,
-    "Fokus pendampingan": r.fokusEndampingan,
-  }));
-}
 
 function narasi0RowsToExport(rows: ICapaian0Row[]): Record<string, string>[] {
   return rows.map((r) => ({
@@ -90,11 +82,10 @@ export function exportCapaianToExcel(
   const wsMeta = rowsToSheet(meta);
   XLSX.utils.book_append_sheet(wb, wsMeta, "Metadata");
 
-  // Level sections
+  // Level sections (capaian per level)
   for (const section of data.levelSections) {
     const rows = capaianRowsToExport(section.rows.length > 0 ? section.rows : [{ elemen: "", tujuanPembelajaran: "", indikator: "", deskripsiBSBBSH: "", deskripsiMBBB: "", solusiRumah: "" }]);
-    const ws = rowsToSheet(rows);
-    XLSX.utils.book_append_sheet(wb, ws, safeSheetName(section.levelName));
+    XLSX.utils.book_append_sheet(wb, rowsToSheet(rows), safeSheetName(section.levelName));
   }
 
   // Narasi Pembuka Penutup
@@ -105,23 +96,21 @@ export function exportCapaianToExcel(
   );
   XLSX.utils.book_append_sheet(wb, rowsToSheet(pembukaRows), "NARASI PEMBUKA PENUTUP");
 
-  // Narasi 100% Tercapai
-  const rows100 = narasi100RowsToExport(
-    data.narasi100Data.length > 0 ? data.narasi100Data : [{ namaElemen: "", narasiCapaian: "", ideSederhana: "" }],
-  );
-  XLSX.utils.book_append_sheet(wb, rowsToSheet(rows100), "NARASI 100% TERCAPAI");
-
-  // Narasi Capaian TK B 100% (kondisional)
-  if (data.narasiTKB100Data && data.narasiTKB100Data.length > 0) {
-    const rowsTKB100 = narasiTKB100RowsToExport(data.narasiTKB100Data);
-    XLSX.utils.book_append_sheet(wb, rowsToSheet(rowsTKB100), "NARASI CAPAIAN TK B 100%");
+  // Narasi 100% per level
+  for (const section of data.narasi100Sections) {
+    const rows = narasi100RowsToExport(
+      section.rows.length > 0 ? section.rows : [{ namaElemen: "", narasiCapaian: "", ideSederhana: "" }],
+    );
+    XLSX.utils.book_append_sheet(wb, rowsToSheet(rows), safeSheetName(section.levelName));
   }
 
-  // Narasi Semua 0%
-  const rows0 = narasi0RowsToExport(
-    data.narasi0Data.length > 0 ? data.narasi0Data : [{ elemen: "", total: "", masih: "", halHalBaik: "" }],
-  );
-  XLSX.utils.book_append_sheet(wb, rowsToSheet(rows0), "NARASI SEMUA 0%");
+  // Narasi 0% per level
+  for (const section of data.narasi0Sections) {
+    const rows = narasi0RowsToExport(
+      section.rows.length > 0 ? section.rows : [{ elemen: "", total: "", masih: "", halHalBaik: "" }],
+    );
+    XLSX.utils.book_append_sheet(wb, rowsToSheet(rows), safeSheetName(section.levelName));
+  }
 
   const sekolahSlug = (namaSekolah || "Fammi").replace(/\s+/g, "_");
   const jenjangSlug = jenjang ? `_${jenjang}` : "";

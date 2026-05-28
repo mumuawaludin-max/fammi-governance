@@ -39,8 +39,7 @@ export function Step5ExportCapaian({ state, onBack, onReset }: Step5ExportCapaia
     }
   }
 
-  const hasTKB100 = !!(data.narasiTKB100Data && data.narasiTKB100Data.length > 0);
-  const totalSheets = data.levelSections.length + 3 + (hasTKB100 ? 1 : 0) + 1; // levels + sections + optional TKB100 + metadata
+  const totalSheets = data.levelSections.length + 1 + data.narasi100Sections.length + data.narasi0Sections.length + 1; // levels + pembuka + 100s + 0s + metadata
 
   return (
     <div className="flex flex-col gap-6">
@@ -98,9 +97,8 @@ export function Step5ExportCapaian({ state, onBack, onReset }: Step5ExportCapaia
           ))}
           {[
             "NARASI PEMBUKA PENUTUP",
-            "NARASI 100% TERCAPAI",
-            ...(hasTKB100 ? ["NARASI CAPAIAN TK B 100%"] : []),
-            "NARASI SEMUA 0%",
+            ...data.narasi100Sections.map((s) => s.levelName),
+            ...data.narasi0Sections.map((s) => s.levelName),
           ].map((s, i) => (
             <div key={s} className="flex items-center gap-2 text-xs text-text-secondary">
               <span className="w-5 h-5 flex items-center justify-center rounded-full bg-fammi-100 text-fammi text-[10px] font-bold">{data.levelSections.length + i + 1}</span>

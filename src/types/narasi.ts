@@ -14,7 +14,7 @@ export const JENJANG_LABELS: Record<Jenjang, string> = {
 };
 
 export const LEVEL_OPTIONS: Record<Jenjang, string[]> = {
-  DAYCARE: [],
+  DAYCARE: ["1 Tahun", "2 Tahun", "3 Tahun", "4 Tahun", "5 Tahun", "6 Tahun"],
   TK: ["KB", "TK A", "TK B"],
   SD: ["Kelas 1", "Kelas 2", "Kelas 3", "Kelas 4", "Kelas 5", "Kelas 6"],
   SMP: ["Kelas 7", "Kelas 8", "Kelas 9"],
@@ -213,12 +213,23 @@ export interface ICapaianLevelSection {
   rows: ICapaianOutputRow[];
 }
 
+export interface ICapaian100LevelSection {
+  levelName: string;
+  level: string;
+  rows: ICapaian100Row[];
+}
+
+export interface ICapaian0LevelSection {
+  levelName: string;
+  level: string;
+  rows: ICapaian0Row[];
+}
+
 export interface ICapaianPreviewData {
   levelSections: ICapaianLevelSection[];
   narasiPembukaData: ICapaianPembukaRow[];
-  narasi100Data: ICapaian100Row[];
-  narasiTKB100Data?: ICapaianTKB100Row[];  // hanya ada jika TK B dipilih
-  narasi0Data: ICapaian0Row[];
+  narasi100Sections: ICapaian100LevelSection[];
+  narasi0Sections: ICapaian0LevelSection[];
 }
 
 export interface ICapaianFormState {
