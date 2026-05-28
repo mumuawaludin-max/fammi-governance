@@ -182,23 +182,6 @@ function isOverloaded(err: unknown): boolean {
   );
 }
 
-async function withRetry<T>(fn: () => Promise<T>, maxRetries = 2): Promise<T> {
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      return await fn();
-    } catch (err) {
-      if (isOverloaded(err) && attempt < maxRetries) {
-        const delay = Math.min(2000 * Math.pow(2, attempt), 8000);
-        console.error(`[generate-capaian] retry ${attempt + 1}/${maxRetries} — tunggu ${delay / 1000}s`);
-        await new Promise((r) => setTimeout(r, delay));
-        continue;
-      }
-      throw err;
-    }
-  }
-  throw new Error("Max retries exceeded");
-}
-
 async function callWithFallback<T extends { rows: unknown[] }>(
   client: Anthropic,
   system: string,
