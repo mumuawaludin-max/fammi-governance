@@ -651,12 +651,26 @@ deskripsiMBBB — 2 kalimat WAJIB, urutan tidak boleh dibalik:
 - Kalimat 2: "Ananda masih memerlukan [pendampingan/bimbingan/arahan/dorongan] agar [capaian ke depan]."
 LARANGAN: kalimat 1 DILARANG dimulai dengan "Ananda masih..." — wajib dimulai dari kesiapan positif.
 
-solusiRumah — 1 kalimat WAJIB menyebut nama indikator di awal dengan variasi pembuka:
-- Variasi 1: "Untuk membantu Ananda [nama indikator], Ayah dan Bunda dapat [aksi spesifik]."
-- Variasi 2: "Agar Ananda semakin terbiasa [nama indikator], Ayah dan Bunda bisa [aksi konkret]."
-- Variasi 3: "Dalam mendukung kemampuan [nama indikator], Ayah dan Bunda dapat [langkah konkret]."
-- Variasi 4: "Sebagai pendampingan untuk [nama indikator], coba ajak Ananda [aksi]."
-WAJIB: nama indikator disebut secara eksplisit di awal kalimat. JANGAN hanya sebut domain/elemen.`;
+solusiRumah — 1 kalimat, WAJIB mengikuti aturan berikut:
+
+ATURAN MENYEBUT INDIKATOR — blend secara gramatikal, jangan tempel mentah:
+- Turunkan huruf kapital awal indikator jika masuk tengah kalimat
+- Boleh parafrase atau persingkat indikator asal maknanya tetap
+- Indikator harus terasa MENGALIR dalam kalimat, bukan sisipan kaku
+- Contoh indikator: "Menyebutkan contoh ciptaan Tuhan (seperti manusia, hewan, tumbuhan)"
+  → BURUK: "Untuk membantu Ananda Menyebutkan contoh ciptaan Tuhan (seperti manusia, hewan, tumbuhan), Ayah dan Bunda bisa membimbing Ananda."
+  → BAIK: "Untuk membantu Ananda mengenal ciptaan Tuhan seperti hewan dan tumbuhan, Ayah dan Bunda bisa mengajaknya jalan-jalan ke kebun sambil menyebut nama-nama yang ditemui dan bertanya 'ini buatan siapa ya?'"
+
+ATURAN AKSI — harus konkret dan bisa langsung dilakukan:
+- Sebutkan KEGIATAN NYATA: apa yang dilakukan, di mana/kapan, dengan benda/cara apa
+- DILARANG aksi yang terlalu umum: "mengajaknya belajar", "mendampingi Ananda", "memberikan contoh", "membimbing Ananda", "melatih secara rutin" — tanpa detail spesifik
+- WAJIB setidaknya ada satu dari: nama benda/media konkret, konteks kegiatan, atau cara pelaksanaan
+
+Variasi pembuka (pilih yang paling natural untuk indikator tersebut):
+- "Untuk membantu Ananda [parafrase indikator], Ayah dan Bunda bisa [kegiatan konkret spesifik]."
+- "Agar Ananda semakin terbiasa [parafrase indikator], coba ajak [kegiatan + cara/konteks]."
+- "Dalam mendukung kemampuan [parafrase indikator], Ayah dan Bunda dapat [kegiatan + detail]."
+- "[Parafrase indikator] bisa dilatih dengan cara [kegiatan konkret] saat [konteks/waktu/tempat]."`;
   }
 
   if (pattern === "TKB") {
@@ -671,12 +685,25 @@ deskripsiMBBB — 2 kalimat WAJIB:
 - Kalimat 2: "Ananda masih memerlukan penguatan agar [capaian ke depan]."
 LARANGAN: kalimat 1 DILARANG dimulai "Ananda masih..." — wajib dari kesiapan positif.
 
-solusiRumah — 1 kalimat WAJIB menyebut nama indikator di awal dengan variasi pembuka:
-- Variasi 1: "Untuk membantu Ananda [nama indikator], Ayah dan Bunda dapat [aksi konkret]."
-- Variasi 2: "Agar Ananda semakin terbiasa [nama indikator], Ayah dan Bunda bisa [aksi]."
-- Variasi 3: "Dalam mendukung kemampuan [nama indikator], Ayah dan Bunda dapat [langkah konkret]."
-- Variasi 4: "Sebagai pendampingan untuk [nama indikator], coba ajak Ananda [aksi]."
-WAJIB: nama indikator disebut secara eksplisit di awal kalimat. JANGAN hanya sebut domain/elemen.`;
+solusiRumah — 1 kalimat, WAJIB mengikuti aturan berikut:
+
+ATURAN MENYEBUT INDIKATOR — blend secara gramatikal, jangan tempel mentah:
+- Turunkan huruf kapital awal indikator jika masuk tengah kalimat
+- Boleh parafrase atau persingkat indikator asal maknanya tetap
+- Contoh indikator: "Menyebutkan contoh ciptaan Tuhan (seperti manusia, hewan, tumbuhan)"
+  → BURUK: "Untuk membantu Ananda Menyebutkan contoh ciptaan Tuhan..., Ayah dan Bunda bisa membimbing Ananda."
+  → BAIK: "Untuk membantu Ananda mengenal ciptaan Tuhan seperti hewan dan tumbuhan, Ayah dan Bunda bisa mengajaknya jalan-jalan ke kebun sambil menyebut nama-nama yang ditemui."
+
+ATURAN AKSI — harus konkret dan bisa langsung dilakukan:
+- Sebutkan KEGIATAN NYATA: apa yang dilakukan, di mana/kapan, dengan benda/cara apa
+- DILARANG: "mengajaknya belajar", "mendampingi Ananda", "memberikan contoh", "membimbing Ananda" tanpa detail spesifik
+- WAJIB setidaknya ada satu dari: nama benda/media konkret, konteks kegiatan, atau cara pelaksanaan
+
+Variasi pembuka:
+- "Untuk membantu Ananda [parafrase indikator], Ayah dan Bunda bisa [kegiatan konkret + detail]."
+- "Agar Ananda semakin terbiasa [parafrase indikator], coba ajak [kegiatan + cara/konteks]."
+- "Dalam mendukung kemampuan [parafrase indikator], Ayah dan Bunda dapat [kegiatan + detail]."
+- "[Parafrase indikator] bisa dilatih dengan cara [kegiatan konkret] saat [konteks/waktu]."`;
   }
 
   // KB / Daycare
@@ -693,10 +720,25 @@ deskripsiMBBB — 3 kalimat WAJIB:
 - Kalimat 3: "Proses ini [membuka/mendukung/membangun] fondasi [tujuan perkembangan] berikutnya."
 LARANGAN: kalimat 1 DILARANG dimulai dari kekurangan. Wajib ada hal positif yang sudah muncul.
 
-solusiRumah — 2 kalimat, kalimat 1 WAJIB menyebut nama indikator di awal:
-- Kalimat 1 variasi: "Untuk membantu Ananda [nama indikator], Ayah dan Bunda dapat [aksi konkret]." / "Agar Ananda semakin terbiasa [nama indikator], coba [aksi]." / "Dalam mendukung [nama indikator], Ayah dan Bunda bisa [langkah]."
-- Kalimat 2: satu langkah tambahan atau cara pelaksanaannya yang singkat.
-WAJIB: nama indikator disebut secara eksplisit di kalimat pertama. JANGAN hanya sebut domain/elemen.`;
+solusiRumah — 2 kalimat, WAJIB mengikuti aturan berikut:
+
+ATURAN MENYEBUT INDIKATOR di kalimat 1 — blend secara gramatikal, jangan tempel mentah:
+- Turunkan huruf kapital awal indikator jika masuk tengah kalimat
+- Boleh parafrase atau persingkat indikator asal maknanya tetap
+- Contoh: "Menyebutkan contoh ciptaan Tuhan (seperti manusia, hewan, tumbuhan)"
+  → BURUK: "Untuk membantu Ananda Menyebutkan contoh ciptaan Tuhan..., Ayah dan Bunda bisa mendampingi."
+  → BAIK: "Untuk membantu Ananda mengenal ciptaan Tuhan seperti hewan dan tumbuhan, Ayah dan Bunda bisa mengajaknya jalan ke taman sambil menyebut nama-nama yang ditemui."
+
+ATURAN AKSI — harus konkret, langsung bisa dilakukan:
+- Kalimat 1: kegiatan utama — sebutkan apa, bagaimana, dan konteksnya (waktu/tempat/benda)
+- Kalimat 2: satu langkah tambahan atau variasi cara pelaksanaannya yang spesifik
+- DILARANG: "mengajaknya belajar", "mendampingi Ananda", "memberikan contoh" tanpa detail spesifik
+
+Variasi pembuka kalimat 1:
+- "Untuk membantu Ananda [parafrase indikator], Ayah dan Bunda bisa [kegiatan konkret + detail]."
+- "Agar Ananda semakin terbiasa [parafrase indikator], coba ajak [kegiatan + cara/konteks]."
+- "[Parafrase indikator] bisa dikenalkan melalui [kegiatan konkret] saat [konteks/waktu]."`;
+
 }
 
 // ── Prompt builders ───────────────────────────────────────────
@@ -733,7 +775,7 @@ ${getPolaInstruksi(pattern)}
 
 LARANGAN WAJIB:
 - DILARANG KERAS menyebut, mengutip, atau memparafrase teks indikator secara harfiah di kolom deskripsiBSBBSH dan deskripsiMBBB. Indikator diberikan sebagai KONTEKS SAJA — tulis perilaku nyata yang mencerminkannya.
-- KHUSUS solusiRumah: nama indikator WAJIB disebut eksplisit di awal kalimat pertama (bukan domain/elemen). Ini bukan mengutip indikator — ini membantu Ayah Bunda memahami konteks panduan.
+- KHUSUS solusiRumah: konsep/isi indikator WAJIB disebut di awal kalimat pertama, di-blend secara gramatikal (huruf kecil, boleh diparafrase, harus mengalir alami). Aksi setelahnya harus KONKRET — sebutkan kegiatan, benda, waktu, atau cara spesifik. DILARANG aksi umum seperti "mengajaknya belajar", "mendampingi", "membimbing" tanpa detail.
 - JANGAN tulis contoh kalimat anak yang ambigu secara sosial (misal: "bersama tetangga atau saudara dari berbagai jenis kelamin") — gunakan konteks sekolah/rumah yang netral.
 - JANGAN campur kata ganti orang pertama: pilih SATU saja, "aku" ATAU "saya", konsisten dalam satu narasi.
 - JANGAN pakai "pemahaman yang solid" → gunakan "pemahaman yang baik" atau "pemahaman yang berkembang".
