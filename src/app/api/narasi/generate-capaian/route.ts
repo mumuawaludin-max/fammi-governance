@@ -55,8 +55,8 @@ const JENJANG_KONTEKS: Record<Jenjang, string> = {
 };
 
 const PEMBUKA_RENTANG = ["65–100", "40–64", "0–39"];
-const BATCH_SIZE = 15;
-const MAX_CONCURRENT = 3; // max concurrent Anthropic calls — 3 × ~6K input = 18K tokens, jauh di bawah 30K rate limit
+const BATCH_SIZE = 5;
+const MAX_CONCURRENT = 8; // 8 × ~3K input = 24K tokens/burst, di bawah Haiku rate limit (200K/min)
 
 // ── Level pattern: menentukan pola narasi per level ───────────
 type LevelPattern = "D1" | "D2" | "D3" | "D4" | "D5" | "D6" | "KB" | "TKA" | "TKB";
@@ -935,7 +935,7 @@ async function generateLevelSection(
       callWithFallback<{ rows: CapaianBatchRow[] }>(
         client, system,
         promptCapaianBatch(batch, batchIdx + 1, batches.length, level, jenjang),
-        toolCapaianRows, 4096,
+        toolCapaianRows, 3072,
       ),
     ),
     MAX_CONCURRENT,
@@ -1053,7 +1053,7 @@ export async function POST(req: Request) {
           callWithFallback<{ rows: CapaianBatchRow[] }>(
             client, system,
             promptCapaianBatch(batch, batchIdx + 1, totalBatches, level, jenjang),
-            toolCapaianRows, 4096,
+            toolCapaianRows, 3072,
           ),
         ),
         MAX_CONCURRENT,
