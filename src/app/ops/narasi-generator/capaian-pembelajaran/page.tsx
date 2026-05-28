@@ -12,7 +12,7 @@ import { Step2UploadCapaian } from "@/components/narasi/Step2UploadCapaian";
 import { Step3ValidateCapaian } from "@/components/narasi/Step3ValidateCapaian";
 import { Step4PreviewCapaian } from "@/components/narasi/Step4PreviewCapaian";
 import { Step5ExportCapaian } from "@/components/narasi/Step5ExportCapaian";
-import type { ICapaianFormState, ICapaianPreviewData, ICapaianOutputRow } from "@/types/narasi";
+import type { ICapaianFormState, ICapaianPreviewData, ICapaianOutputRow, ICapaianLevelSection, ICapaianPembukaRow, ICapaian100LevelSection, ICapaian0LevelSection } from "@/types/narasi";
 import type { CellUpdateHandler } from "@/components/narasi/Step4PreviewCapaian";
 
 const INITIAL_STATE: ICapaianFormState = {
@@ -76,20 +76,20 @@ export default function CapaianPembelajaranPage() {
   async function goToStep4() {
     if (!formState.parsedWorkbook || !formState.jenjang) return;
     setIsGenerating(true);
-    try {
-      const levelList = formState.levelList;
+
+    async function fetchPhase<T>(phase: "sections" | "summaries"): Promise<T> {
       const res = await fetch("/api/narasi/generate-capaian", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           namaSekolah: formState.namaSekolah,
           jenjang: formState.jenjang,
-          levelList,
+          levelList: formState.levelList,
           narrativeTone: formState.narrativeTone,
           workbook: formState.parsedWorkbook,
+          phase,
         }),
       });
-
       if (!res.ok) {
         let errMsg = `HTTP ${res.status}`;
         try {
@@ -100,9 +100,22 @@ export default function CapaianPembelajaranPage() {
         }
         throw new Error(errMsg);
       }
+      return res.json() as Promise<T>;
+    }
 
-      const json = await res.json() as { data: ICapaianPreviewData };
-      updateState({ previewData: json.data, step: 4 });
+    try {
+      const [sectionsJson, summariesJson] = await Promise.all([
+        fetchPhase<{ data: { levelSections: ICapaianLevelSection[] } }>("sections"),
+        fetchPhase<{ data: { narasiPembukaData: ICapaianPembukaRow[]; narasi100Sections: ICapaian100LevelSection[]; narasi0Sections: ICapaian0LevelSection[] } }>("summaries"),
+      ]);
+
+      const previewData: ICapaianPreviewData = {
+        levelSections: sectionsJson.data.levelSections,
+        narasiPembukaData: summariesJson.data.narasiPembukaData,
+        narasi100Sections: summariesJson.data.narasi100Sections,
+        narasi0Sections: summariesJson.data.narasi0Sections,
+      };
+      updateState({ previewData, step: 4 });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       alert(`Gagal generate narasi: ${msg}`);
@@ -321,7 +334,7 @@ export default function CapaianPembelajaranPage() {
                 <p className="text-xs text-text-secondary mt-1.5 leading-relaxed">
                   Menyusun narasi untuk{" "}
                   <span className="font-semibold text-fammi">{formState.parsedWorkbook?.elemenList.length ?? 0} elemen</span>,{" "}
-                  <span className="font-semibold text-fammi">{levelDisplay.length} level</span>, dan semua section wajib.
+                  <span className="font-semibold text-fammi">{levelDisplay.length} level</span>, dan semua section ringkasan secara bersamaan.{" "}
                   Proses ini membutuhkan <span className="font-semibold text-fammi">1–3 menit</span> — jangan tutup halaman ini.
                 </p>
               </div>

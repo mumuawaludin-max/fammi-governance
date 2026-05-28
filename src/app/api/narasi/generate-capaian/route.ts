@@ -31,6 +31,7 @@ interface GenerateCapaianRequest {
   narrativeTone: NarrativeTone;
   workbook: IParsedCapaianWorkbook;
   regenRow?: RegenRowPayload;
+  phase?: "sections" | "summaries";
 }
 
 // Module-level response types (used by both main handler and regenRow)
@@ -1046,22 +1047,97 @@ export async function POST(req: Request) {
     const client = new Anthropic({ apiKey });
     const system = buildSystem(jenjang, narrativeTone);
 
-    // ── Phase 1: Level capaian sections — tiap level jalan PARALEL, batch dalam level tetap sequential ──
+    // ── PHASE-SPLIT: "sections" only generates capaian rows per level ──
+    if (body.phase === "sections") {
+      const levelSectionRows: ICapaianOutputRow[][] = await Promise.all(
+        levelList.map((level) => generateLevelSection(client, system, workbook, level, jenjang, makeQueue())),
+      );
+      const levelSections: ICapaianLevelSection[] = levelList.map((level, idx) => ({
+        levelName: level === "Daycare" ? "CAPAIAN DAYCARE" : `CAPAIAN ${level.toUpperCase()}`,
+        level,
+        rows: levelSectionRows[idx],
+      }));
+      return NextResponse.json({ data: { levelSections } });
+    }
+
+    // ── PHASE-SPLIT: "summaries" only generates pembuka + narasi100 + narasi0 ──
+    if (body.phase === "summaries") {
+      const [resPembuka, narasi100Results, narasi0Results] = await Promise.all([
+        callWithFallback<PembukaInput>(client, system, promptPembuka(workbook, jenjang, narrativeTone), toolPembuka, 6144),
+        Promise.all(
+          levelList.map((level) =>
+            callWithFallback<N100Input>(client, system, promptNarasi100(workbook, level, jenjang, narrativeTone), toolNarasi100, 4096),
+          ),
+        ),
+        Promise.all(
+          levelList.map((level) =>
+            callWithFallback<N0Input>(client, system, promptNarasi0(workbook, level, narrativeTone), toolNarasi0, 3072),
+          ),
+        ),
+      ]);
+
+      const narasiPembukaData: ICapaianPembukaRow[] = [];
+      let pembukaIdx = 0;
+      for (const elemen of workbook.elemenList) {
+        for (const rentang of PEMBUKA_RENTANG) {
+          const match = resPembuka.rows[pembukaIdx++];
+          narasiPembukaData.push({
+            namaElemen: cleanElemen(elemen),
+            rentangSkor: rentang,
+            kalimatPembuka: match?.kalimatPembuka ?? "(Belum dihasilkan)",
+            kalimatPenutup: match?.kalimatPenutup ?? "(Belum dihasilkan)",
+          });
+        }
+      }
+
+      const narasi100SectionRows: ICapaian100Row[][] = narasi100Results.map((r) =>
+        workbook.elemenList.map((elemen, idx) => ({
+          namaElemen: cleanElemen(elemen),
+          narasiCapaian: r.rows[idx]?.narasiCapaian ?? "(Belum dihasilkan)",
+          ideSederhana: r.rows[idx]?.ideSederhana ?? "(Belum dihasilkan)",
+        })),
+      );
+
+      const narasi0SectionRows: ICapaian0Row[][] = narasi0Results.map((r) =>
+        workbook.elemenList.map((elemen, idx) => ({
+          elemen: cleanElemen(elemen),
+          total: `${workbook.indikatorPerElemen[elemen] ?? 0} indikator`,
+          masih: "Masih perlu penguatan",
+          halHalBaik: r.rows[idx]?.halHalBaik ?? "(Belum dihasilkan)",
+        })),
+      );
+
+      const narasi100Sections: ICapaian100LevelSection[] = levelList.map((level, idx) => ({
+        levelName: `NARASI 100% ${level.toUpperCase()}`,
+        level,
+        rows: narasi100SectionRows[idx],
+      }));
+
+      const narasi0Sections: ICapaian0LevelSection[] = levelList.map((level, idx) => ({
+        levelName: `NARASI 0% ${level.toUpperCase()}`,
+        level,
+        rows: narasi0SectionRows[idx],
+      }));
+
+      return NextResponse.json({ data: { narasiPembukaData, narasi100Sections, narasi0Sections } });
+    }
+
+    // ── Legacy (no phase): run both phases sequentially for backward compat ──
     const levelSectionRows: ICapaianOutputRow[][] = await Promise.all(
       levelList.map((level) => generateLevelSection(client, system, workbook, level, jenjang, makeQueue())),
     );
 
     // ── Phase 2: Pembuka + narasi100 per level + narasi0 per level — semua PARALEL ──
     const [resPembuka, narasi100Results, narasi0Results] = await Promise.all([
-      callWithFallback<PembukaInput>(client, system, promptPembuka(workbook, jenjang, narrativeTone), toolPembuka, 8192),
+      callWithFallback<PembukaInput>(client, system, promptPembuka(workbook, jenjang, narrativeTone), toolPembuka, 6144),
       Promise.all(
         levelList.map((level) =>
-          callWithFallback<N100Input>(client, system, promptNarasi100(workbook, level, jenjang, narrativeTone), toolNarasi100, 8192),
+          callWithFallback<N100Input>(client, system, promptNarasi100(workbook, level, jenjang, narrativeTone), toolNarasi100, 4096),
         ),
       ),
       Promise.all(
         levelList.map((level) =>
-          callWithFallback<N0Input>(client, system, promptNarasi0(workbook, level, narrativeTone), toolNarasi0, 8192),
+          callWithFallback<N0Input>(client, system, promptNarasi0(workbook, level, narrativeTone), toolNarasi0, 3072),
         ),
       ),
     ]);
