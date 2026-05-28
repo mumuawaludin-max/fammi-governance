@@ -182,6 +182,9 @@ function isOverloaded(err: unknown): boolean {
   );
 }
 
+// callWithFallback: 1 Haiku attempt → jika rate-limited, 1s delay → 1 Haiku retry
+// → jika rate-limited lagi, 1 Sonnet attempt. SDK maxRetries=0 jadi tidak ada
+// hidden retry loop dari SDK yang makan 5-10s per retry.
 async function callWithFallback<T extends { rows: unknown[] }>(
   client: Anthropic,
   system: string,
@@ -189,24 +192,26 @@ async function callWithFallback<T extends { rows: unknown[] }>(
   tool: Anthropic.Tool,
   maxTokens = 4096,
 ): Promise<T> {
-  for (let attempt = 0; attempt <= 1; attempt++) {
-    try {
-      return await callWithTool<T>(client, system, userPrompt, tool, maxTokens, MODEL);
-    } catch (err) {
-      if (isOverloaded(err) && attempt < 1) {
-        const delay = 2000;
-        console.error(`[haiku] overloaded attempt ${attempt + 1}/2 — tunggu ${delay / 1000}s`);
-        await new Promise((r) => setTimeout(r, delay));
-        continue;
-      }
-      if (isOverloaded(err)) {
-        console.error(`[haiku] overloaded → fallback ke sonnet (1 attempt)`);
-        return await callWithTool<T>(client, system, userPrompt, tool, maxTokens, MODEL_FALLBACK);
-      }
-      throw err;
-    }
+  // Attempt 1: Haiku
+  try {
+    return await callWithTool<T>(client, system, userPrompt, tool, maxTokens, MODEL);
+  } catch (err1) {
+    if (!isOverloaded(err1)) throw err1; // timeout / parse error → fail fast
+    console.error("[haiku] rate-limited attempt 1 → retry after 1s");
   }
-  throw new Error("Unreachable");
+
+  await new Promise((r) => setTimeout(r, 1000));
+
+  // Attempt 2: Haiku retry
+  try {
+    return await callWithTool<T>(client, system, userPrompt, tool, maxTokens, MODEL);
+  } catch (err2) {
+    if (!isOverloaded(err2)) throw err2;
+    console.error("[haiku] rate-limited attempt 2 → fallback ke sonnet");
+  }
+
+  // Attempt 3: Sonnet fallback (1 attempt, no retry)
+  return await callWithTool<T>(client, system, userPrompt, tool, maxTokens, MODEL_FALLBACK);
 }
 
 // ── Kosakata wajib per jenjang ────────────────────────────────
@@ -962,7 +967,7 @@ export async function POST(req: Request) {
     // ── Single-row regenerate mode ────────────────────────────
     if (body.regenRow) {
       const regen = body.regenRow;
-      const client = new Anthropic({ apiKey, timeout: 25000 });
+      const client = new Anthropic({ apiKey, timeout: 25000, maxRetries: 0 });
       const system = buildSystem(jenjang, narrativeTone);
 
       if (regen.type === "capaian") {
@@ -1008,7 +1013,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unknown regenRow type" }, { status: 400 });
     }
 
-    const client = new Anthropic({ apiKey, timeout: 25000 });
+    const client = new Anthropic({ apiKey, timeout: 25000, maxRetries: 0 });
     const system = buildSystem(jenjang, narrativeTone);
 
     // ── PHASE-SPLIT: "sections" only generates capaian rows per level ──
