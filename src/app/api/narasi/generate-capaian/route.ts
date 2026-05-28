@@ -182,13 +182,13 @@ function isOverloaded(err: unknown): boolean {
   );
 }
 
-async function withRetry<T>(fn: () => Promise<T>, maxRetries = 4): Promise<T> {
+async function withRetry<T>(fn: () => Promise<T>, maxRetries = 2): Promise<T> {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       return await fn();
     } catch (err) {
       if (isOverloaded(err) && attempt < maxRetries) {
-        const delay = Math.min(5000 * Math.pow(2, attempt), 30000);
+        const delay = Math.min(2000 * Math.pow(2, attempt), 8000);
         console.error(`[generate-capaian] retry ${attempt + 1}/${maxRetries} — tunggu ${delay / 1000}s`);
         await new Promise((r) => setTimeout(r, delay));
         continue;
@@ -204,41 +204,29 @@ async function callWithFallback<T extends { rows: unknown[] }>(
   system: string,
   userPrompt: string,
   tool: Anthropic.Tool,
-  maxTokens = 8192,
+  maxTokens = 4096,
 ): Promise<T> {
-  for (let attempt = 0; attempt <= 2; attempt++) {
+  for (let attempt = 0; attempt <= 1; attempt++) {
     try {
       return await callWithTool<T>(client, system, userPrompt, tool, maxTokens, MODEL);
     } catch (err) {
-      if (isOverloaded(err) && attempt < 2) {
-        const delay = 5000 * (attempt + 1);
-        console.error(`[haiku] overloaded attempt ${attempt + 1}/3 — tunggu ${delay / 1000}s`);
+      if (isOverloaded(err) && attempt < 1) {
+        const delay = 2000;
+        console.error(`[haiku] overloaded attempt ${attempt + 1}/2 — tunggu ${delay / 1000}s`);
         await new Promise((r) => setTimeout(r, delay));
         continue;
       }
       if (isOverloaded(err)) {
-        console.error(`[haiku] 3x overloaded → fallback ke sonnet`);
+        console.error(`[haiku] overloaded → fallback ke sonnet`);
         return await withRetry(
           () => callWithTool<T>(client, system, userPrompt, tool, maxTokens, MODEL_FALLBACK),
-          3,
+          2,
         );
       }
       throw err;
     }
   }
   throw new Error("Unreachable");
-}
-
-function makeQueue() {
-  let chain = Promise.resolve();
-  return function enqueue<T>(fn: () => Promise<T>): Promise<T> {
-    const result = chain.then(() => fn()).then(
-      (v) => { chain = Promise.resolve(); return v; },
-      (e) => { chain = Promise.resolve(); throw e; }
-    );
-    chain = result.then(() => undefined, () => undefined);
-    return result;
-  };
 }
 
 // ── Kosakata wajib per jenjang ────────────────────────────────
@@ -932,24 +920,27 @@ async function generateLevelSection(
   workbook: IParsedCapaianWorkbook,
   level: string,
   jenjang: Jenjang,
-  enqueue: ReturnType<typeof makeQueue>,
 ): Promise<ICapaianOutputRow[]> {
   const batches: ICapaianRow[][] = [];
   for (let i = 0; i < workbook.rows.length; i += BATCH_SIZE) {
     batches.push(workbook.rows.slice(i, i + BATCH_SIZE));
   }
 
-  const outputRows: ICapaianOutputRow[] = [];
-  for (let batchIdx = 0; batchIdx < batches.length; batchIdx++) {
-    const batch = batches[batchIdx];
-    const result = await enqueue(() =>
+  // Semua batch jalan PARALEL — ini yang menentukan apakah muat dalam 60s
+  const results = await Promise.all(
+    batches.map((batch, batchIdx) =>
       callWithFallback<{ rows: CapaianBatchRow[] }>(
         client, system,
         promptCapaianBatch(batch, batchIdx + 1, batches.length, level, jenjang),
-        toolCapaianRows, 8192,
+        toolCapaianRows, 4096,
       ),
-    );
+    ),
+  );
 
+  const outputRows: ICapaianOutputRow[] = [];
+  for (let batchIdx = 0; batchIdx < batches.length; batchIdx++) {
+    const batch = batches[batchIdx];
+    const result = results[batchIdx];
     for (let rowIdx = 0; rowIdx < batch.length; rowIdx++) {
       const srcRow = batch[rowIdx];
       const match = result.rows[rowIdx];
@@ -993,11 +984,10 @@ export async function POST(req: Request) {
       const regen = body.regenRow;
       const client = new Anthropic({ apiKey });
       const system = buildSystem(jenjang, narrativeTone);
-      const enqueue = makeQueue();
 
       if (regen.type === "capaian") {
         const singleWorkbook: IParsedCapaianWorkbook = { ...workbook, rows: [regen.row] };
-        const [regenerated] = await generateLevelSection(client, system, singleWorkbook, regen.level, jenjang, enqueue);
+        const [regenerated] = await generateLevelSection(client, system, singleWorkbook, regen.level, jenjang);
         return NextResponse.json({ row: regenerated });
       }
 
@@ -1008,10 +998,8 @@ export async function POST(req: Request) {
           elemenList: [regen.elemen],
           indikatorPerElemen: { [regen.elemen]: indikatorCount },
         };
-        const result = await enqueue(() =>
-          callWithFallback<PembukaInput>(client, system, promptPembuka(singleWorkbook, jenjang, narrativeTone), toolPembuka, 2048),
-        );
-        const row = result.rows.find((r) => r.rentangSkor === regen.rentangSkor) ?? result.rows[0];
+        const result = await callWithFallback<PembukaInput>(client, system, promptPembuka(singleWorkbook, jenjang, narrativeTone), toolPembuka, 2048);
+        const row = result.rows.find((r: { rentangSkor: string }) => r.rentangSkor === regen.rentangSkor) ?? result.rows[0];
         return NextResponse.json({ row });
       }
 
@@ -1022,9 +1010,7 @@ export async function POST(req: Request) {
           elemenList: [regen.elemen],
           indikatorPerElemen: { [regen.elemen]: indikatorCount },
         };
-        const result = await enqueue(() =>
-          callWithFallback<N100Input>(client, system, promptNarasi100(singleWorkbook, regen.level, jenjang, narrativeTone), toolNarasi100, 2048),
-        );
+        const result = await callWithFallback<N100Input>(client, system, promptNarasi100(singleWorkbook, regen.level, jenjang, narrativeTone), toolNarasi100, 2048);
         return NextResponse.json({ row: result.rows[0] });
       }
 
@@ -1035,9 +1021,7 @@ export async function POST(req: Request) {
           elemenList: [regen.elemen],
           indikatorPerElemen: { [regen.elemen]: indikatorCount },
         };
-        const result = await enqueue(() =>
-          callWithFallback<N0Input>(client, system, promptNarasi0(singleWorkbook, regen.level, narrativeTone), toolNarasi0, 2048),
-        );
+        const result = await callWithFallback<N0Input>(client, system, promptNarasi0(singleWorkbook, regen.level, narrativeTone), toolNarasi0, 2048);
         return NextResponse.json({ row: result.rows[0] });
       }
 
@@ -1050,7 +1034,7 @@ export async function POST(req: Request) {
     // ── PHASE-SPLIT: "sections" only generates capaian rows per level ──
     if (body.phase === "sections") {
       const levelSectionRows: ICapaianOutputRow[][] = await Promise.all(
-        levelList.map((level) => generateLevelSection(client, system, workbook, level, jenjang, makeQueue())),
+        levelList.map((level) => generateLevelSection(client, system, workbook, level, jenjang)),
       );
       const levelSections: ICapaianLevelSection[] = levelList.map((level, idx) => ({
         levelName: level === "Daycare" ? "CAPAIAN DAYCARE" : `CAPAIAN ${level.toUpperCase()}`,
@@ -1124,7 +1108,7 @@ export async function POST(req: Request) {
 
     // ── Legacy (no phase): run both phases sequentially for backward compat ──
     const levelSectionRows: ICapaianOutputRow[][] = await Promise.all(
-      levelList.map((level) => generateLevelSection(client, system, workbook, level, jenjang, makeQueue())),
+      levelList.map((level) => generateLevelSection(client, system, workbook, level, jenjang)),
     );
 
     // ── Phase 2: Pembuka + narasi100 per level + narasi0 per level — semua PARALEL ──
