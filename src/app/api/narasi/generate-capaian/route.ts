@@ -651,7 +651,12 @@ deskripsiMBBB — 2 kalimat WAJIB, urutan tidak boleh dibalik:
 - Kalimat 2: "Ananda masih memerlukan [pendampingan/bimbingan/arahan/dorongan] agar [capaian ke depan]."
 LARANGAN: kalimat 1 DILARANG dimulai dengan "Ananda masih..." — wajib dimulai dari kesiapan positif.
 
-solusiRumah — 1 kalimat: "Untuk [tujuan konkret], Ayah dan Bunda dapat [aksi spesifik]."`;
+solusiRumah — 1 kalimat WAJIB menyebut nama indikator di awal dengan variasi pembuka:
+- Variasi 1: "Untuk membantu Ananda [nama indikator], Ayah dan Bunda dapat [aksi spesifik]."
+- Variasi 2: "Agar Ananda semakin terbiasa [nama indikator], Ayah dan Bunda bisa [aksi konkret]."
+- Variasi 3: "Dalam mendukung kemampuan [nama indikator], Ayah dan Bunda dapat [langkah konkret]."
+- Variasi 4: "Sebagai pendampingan untuk [nama indikator], coba ajak Ananda [aksi]."
+WAJIB: nama indikator disebut secara eksplisit di awal kalimat. JANGAN hanya sebut domain/elemen.`;
   }
 
   if (pattern === "TKB") {
@@ -666,7 +671,12 @@ deskripsiMBBB — 2 kalimat WAJIB:
 - Kalimat 2: "Ananda masih memerlukan penguatan agar [capaian ke depan]."
 LARANGAN: kalimat 1 DILARANG dimulai "Ananda masih..." — wajib dari kesiapan positif.
 
-solusiRumah — 1 kalimat: "Untuk [tujuan], Ayah dan Bunda dapat [aksi konkret]."`;
+solusiRumah — 1 kalimat WAJIB menyebut nama indikator di awal dengan variasi pembuka:
+- Variasi 1: "Untuk membantu Ananda [nama indikator], Ayah dan Bunda dapat [aksi konkret]."
+- Variasi 2: "Agar Ananda semakin terbiasa [nama indikator], Ayah dan Bunda bisa [aksi]."
+- Variasi 3: "Dalam mendukung kemampuan [nama indikator], Ayah dan Bunda dapat [langkah konkret]."
+- Variasi 4: "Sebagai pendampingan untuk [nama indikator], coba ajak Ananda [aksi]."
+WAJIB: nama indikator disebut secara eksplisit di awal kalimat. JANGAN hanya sebut domain/elemen.`;
   }
 
   // KB / Daycare
@@ -683,9 +693,10 @@ deskripsiMBBB — 3 kalimat WAJIB:
 - Kalimat 3: "Proses ini [membuka/mendukung/membangun] fondasi [tujuan perkembangan] berikutnya."
 LARANGAN: kalimat 1 DILARANG dimulai dari kekurangan. Wajib ada hal positif yang sudah muncul.
 
-solusiRumah — 2 kalimat:
-- Kalimat 1: "Untuk [tujuan], Ayah dan Bunda dapat [aksi konkret]."
-- Kalimat 2: satu langkah tambahan atau cara pelaksanaannya yang singkat.`;
+solusiRumah — 2 kalimat, kalimat 1 WAJIB menyebut nama indikator di awal:
+- Kalimat 1 variasi: "Untuk membantu Ananda [nama indikator], Ayah dan Bunda dapat [aksi konkret]." / "Agar Ananda semakin terbiasa [nama indikator], coba [aksi]." / "Dalam mendukung [nama indikator], Ayah dan Bunda bisa [langkah]."
+- Kalimat 2: satu langkah tambahan atau cara pelaksanaannya yang singkat.
+WAJIB: nama indikator disebut secara eksplisit di kalimat pertama. JANGAN hanya sebut domain/elemen.`;
 }
 
 // ── Prompt builders ───────────────────────────────────────────
@@ -721,7 +732,8 @@ ${vocabGuard}
 ${getPolaInstruksi(pattern)}
 
 LARANGAN WAJIB:
-- DILARANG KERAS menyebut, mengutip, atau memparafrase teks indikator secara harfiah. Indikator diberikan sebagai KONTEKS SAJA — tulis perilaku nyata yang mencerminkannya, bukan mendefinisikan atau merujuk teks indikatornya.
+- DILARANG KERAS menyebut, mengutip, atau memparafrase teks indikator secara harfiah di kolom deskripsiBSBBSH dan deskripsiMBBB. Indikator diberikan sebagai KONTEKS SAJA — tulis perilaku nyata yang mencerminkannya.
+- KHUSUS solusiRumah: nama indikator WAJIB disebut eksplisit di awal kalimat pertama (bukan domain/elemen). Ini bukan mengutip indikator — ini membantu Ayah Bunda memahami konteks panduan.
 - JANGAN tulis contoh kalimat anak yang ambigu secara sosial (misal: "bersama tetangga atau saudara dari berbagai jenis kelamin") — gunakan konteks sekolah/rumah yang netral.
 - JANGAN campur kata ganti orang pertama: pilih SATU saja, "aku" ATAU "saya", konsisten dalam satu narasi.
 - JANGAN pakai "pemahaman yang solid" → gunakan "pemahaman yang baik" atau "pemahaman yang berkembang".

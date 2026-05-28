@@ -311,7 +311,7 @@ export default function CapaianPembelajaranPage() {
                 </svg>
               </div>
               <div className="text-center max-w-sm">
-                <p className="text-sm font-bold text-text-primary">Claude sedang membuat narasi capaian...</p>
+                <p className="text-sm font-bold text-text-primary">Fammi Intelligence System sedang membuat narasi capaian...</p>
                 <p className="text-xs text-text-secondary mt-1.5 leading-relaxed">
                   Menyusun narasi untuk{" "}
                   <span className="font-semibold text-fammi">{formState.parsedWorkbook?.elemenList.length ?? 0} elemen</span>,{" "}
