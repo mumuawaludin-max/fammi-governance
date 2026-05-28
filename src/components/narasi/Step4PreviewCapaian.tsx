@@ -95,12 +95,11 @@ function RegenBtn({ loading, disabled, onClick }: { loading: boolean; disabled: 
 const CAPAIAN_FIELDS: (keyof ICapaianOutputRow)[] = ["deskripsiBSBBSH", "deskripsiMBBB", "solusiRumah"];
 
 function CapaianTable({
-  rows, search, levelName,
+  rows, search,
   onUpdateCell, onRegenerateRow,
 }: {
   rows: ICapaianOutputRow[];
   search: string;
-  levelName: string;
   onUpdateCell: (rowIdx: number, field: keyof ICapaianOutputRow, val: string) => void;
   onRegenerateRow: (rowIdx: number) => Promise<void>;
 }) {
@@ -208,12 +207,11 @@ function PembukaTable({
 }
 
 function Narasi100Table({
-  rows, search, levelName,
+  rows, search,
   onUpdateCell, onRegenerateRow,
 }: {
   rows: ICapaian100Row[];
   search: string;
-  levelName: string;
   onUpdateCell: (rowIdx: number, field: "narasiCapaian" | "ideSederhana", val: string) => void;
   onRegenerateRow: (rowIdx: number) => Promise<void>;
 }) {
@@ -261,12 +259,11 @@ function Narasi100Table({
 }
 
 function Narasi0Table({
-  rows, search, levelName,
+  rows, search,
   onUpdateCell, onRegenerateRow,
 }: {
   rows: ICapaian0Row[];
   search: string;
-  levelName: string;
   onUpdateCell: (rowIdx: number, val: string) => void;
   onRegenerateRow: (rowIdx: number) => Promise<void>;
 }) {
@@ -382,7 +379,6 @@ export function Step4PreviewCapaian({ state, onApprove, onRegenerate, onBack, ha
             key={section.levelName}
             rows={section.rows}
             search={search}
-            levelName={section.levelName}
             onUpdateCell={(rowIdx, field, val) => handlers.updateCapaian(section.levelName, rowIdx, field, val)}
             onRegenerateRow={(rowIdx) => handlers.regenCapaian(section.levelName, rowIdx)}
           />
@@ -404,7 +400,6 @@ export function Step4PreviewCapaian({ state, onApprove, onRegenerate, onBack, ha
             key={section.levelName}
             rows={section.rows}
             search={search}
-            levelName={section.levelName}
             onUpdateCell={(rowIdx, field, val) => handlers.update100(section.levelName, rowIdx, field, val)}
             onRegenerateRow={(rowIdx) => handlers.regen100(section.levelName, rowIdx)}
           />
@@ -417,7 +412,6 @@ export function Step4PreviewCapaian({ state, onApprove, onRegenerate, onBack, ha
             key={section.levelName}
             rows={section.rows}
             search={search}
-            levelName={section.levelName}
             onUpdateCell={(rowIdx, val) => handlers.update0(section.levelName, rowIdx, val)}
             onRegenerateRow={(rowIdx) => handlers.regen0(section.levelName, rowIdx)}
           />
