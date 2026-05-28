@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 
-export const maxDuration = 300; // 5 menit — generate narasi karakter butuh banyak API calls berurutan
+export const maxDuration = 60; // 60s — Vercel Hobby max
 import type {
   IParsedWorkbook,
   INarasiUmumRow,

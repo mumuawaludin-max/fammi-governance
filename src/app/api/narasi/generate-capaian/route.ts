@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 
-export const maxDuration = 300; // 5 menit — generate capaian butuh banyak API calls berurutan
+export const maxDuration = 60; // 60s — Vercel Hobby max. Calls di-parallelkan agar muat.
 import type {
   IParsedCapaianWorkbook,
   ICapaianRow,
@@ -1046,46 +1046,42 @@ export async function POST(req: Request) {
     const client = new Anthropic({ apiKey });
     const system = buildSystem(jenjang, narrativeTone);
 
-    const enqueue = makeQueue();
-
-    const levelSectionRows: ICapaianOutputRow[][] = [];
-    for (const level of levelList) {
-      const rows = await generateLevelSection(client, system, workbook, level, jenjang, enqueue);
-      levelSectionRows.push(rows);
-    }
-
-    const resPembuka = await enqueue(() =>
-      callWithFallback<PembukaInput>(client, system, promptPembuka(workbook, jenjang, narrativeTone), toolPembuka, 8192),
+    // ── Phase 1: Level capaian sections — tiap level jalan PARALEL, batch dalam level tetap sequential ──
+    const levelSectionRows: ICapaianOutputRow[][] = await Promise.all(
+      levelList.map((level) => generateLevelSection(client, system, workbook, level, jenjang, makeQueue())),
     );
 
-    const narasi100SectionRows: ICapaian100Row[][] = [];
-    for (const level of levelList) {
-      const r = await enqueue(() =>
-        callWithFallback<N100Input>(client, system, promptNarasi100(workbook, level, jenjang, narrativeTone), toolNarasi100, 8192),
-      );
-      narasi100SectionRows.push(
-        workbook.elemenList.map((elemen, idx) => ({
-          namaElemen: cleanElemen(elemen),
-          narasiCapaian: r.rows[idx]?.narasiCapaian ?? "(Belum dihasilkan)",
-          ideSederhana: r.rows[idx]?.ideSederhana ?? "(Belum dihasilkan)",
-        })),
-      );
-    }
+    // ── Phase 2: Pembuka + narasi100 per level + narasi0 per level — semua PARALEL ──
+    const [resPembuka, narasi100Results, narasi0Results] = await Promise.all([
+      callWithFallback<PembukaInput>(client, system, promptPembuka(workbook, jenjang, narrativeTone), toolPembuka, 8192),
+      Promise.all(
+        levelList.map((level) =>
+          callWithFallback<N100Input>(client, system, promptNarasi100(workbook, level, jenjang, narrativeTone), toolNarasi100, 8192),
+        ),
+      ),
+      Promise.all(
+        levelList.map((level) =>
+          callWithFallback<N0Input>(client, system, promptNarasi0(workbook, level, narrativeTone), toolNarasi0, 8192),
+        ),
+      ),
+    ]);
 
-    const narasi0SectionRows: ICapaian0Row[][] = [];
-    for (const level of levelList) {
-      const r = await enqueue(() =>
-        callWithFallback<N0Input>(client, system, promptNarasi0(workbook, level, narrativeTone), toolNarasi0, 8192),
-      );
-      narasi0SectionRows.push(
-        workbook.elemenList.map((elemen, idx) => ({
-          elemen: cleanElemen(elemen),
-          total: `${workbook.indikatorPerElemen[elemen] ?? 0} indikator`,
-          masih: "Masih perlu penguatan",
-          halHalBaik: r.rows[idx]?.halHalBaik ?? "(Belum dihasilkan)",
-        })),
-      );
-    }
+    const narasi100SectionRows: ICapaian100Row[][] = narasi100Results.map((r) =>
+      workbook.elemenList.map((elemen, idx) => ({
+        namaElemen: cleanElemen(elemen),
+        narasiCapaian: r.rows[idx]?.narasiCapaian ?? "(Belum dihasilkan)",
+        ideSederhana: r.rows[idx]?.ideSederhana ?? "(Belum dihasilkan)",
+      })),
+    );
+
+    const narasi0SectionRows: ICapaian0Row[][] = narasi0Results.map((r) =>
+      workbook.elemenList.map((elemen, idx) => ({
+        elemen: cleanElemen(elemen),
+        total: `${workbook.indikatorPerElemen[elemen] ?? 0} indikator`,
+        masih: "Masih perlu penguatan",
+        halHalBaik: r.rows[idx]?.halHalBaik ?? "(Belum dihasilkan)",
+      })),
+    );
 
     // ── Assemble output ───────────────────────────────────────
 
