@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+
+export const maxDuration = 300; // 5 menit — generate capaian butuh banyak API calls berurutan
 import type {
   IParsedCapaianWorkbook,
   ICapaianRow,

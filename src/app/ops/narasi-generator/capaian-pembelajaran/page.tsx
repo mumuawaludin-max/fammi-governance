@@ -91,8 +91,14 @@ export default function CapaianPembelajaranPage() {
       });
 
       if (!res.ok) {
-        const err = await res.json() as { error?: string };
-        throw new Error(err.error ?? `HTTP ${res.status}`);
+        let errMsg = `HTTP ${res.status}`;
+        try {
+          const errBody = await res.json() as { error?: string };
+          errMsg = errBody.error ?? errMsg;
+        } catch {
+          try { errMsg = (await res.text()).slice(0, 200) || errMsg; } catch { /* ignore */ }
+        }
+        throw new Error(errMsg);
       }
 
       const json = await res.json() as { data: ICapaianPreviewData };
