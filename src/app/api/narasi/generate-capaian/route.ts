@@ -986,7 +986,7 @@ export async function POST(req: Request) {
     // ── Single-row regenerate mode ────────────────────────────
     if (body.regenRow) {
       const regen = body.regenRow;
-      const client = new Anthropic({ apiKey, timeout: 25000, maxRetries: 0 });
+      const client = new Anthropic({ apiKey, timeout: 45000, maxRetries: 0 });
       const system = buildSystem(jenjang, narrativeTone);
 
       if (regen.type === "capaian") {
@@ -1032,7 +1032,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unknown regenRow type" }, { status: 400 });
     }
 
-    const client = new Anthropic({ apiKey, timeout: 25000, maxRetries: 0 });
+    const client = new Anthropic({ apiKey, timeout: 45000, maxRetries: 0 });
     const system = buildSystem(jenjang, narrativeTone);
 
     // ── PHASE-SPLIT: "sections" ──────────────────────────────────
